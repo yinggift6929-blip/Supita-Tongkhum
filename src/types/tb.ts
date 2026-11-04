@@ -35,6 +35,40 @@ export interface AlertItem {
   date?: string;
 }
 
+export interface DispensedItem {
+  drugName: string;
+  quantity: string;
+  instructions?: string;
+}
+
+export interface PatientVisit {
+  id: string;
+  visitDate: string; // YYYY-MM-DD
+  weight: number; // kg at this visit
+  regimen: string; // Regimen at this visit
+  daysOfSupply: number; // e.g. 7, 14, 28 days
+  dispenseStatus: 'Pending' | 'Dispensed' | 'Verified'; // รอจัด/จ่าย หรือ จ่ายยาแล้ว
+  medicationTakingStatus?: 'correct' | 'incorrect'; // การประเมิน: กินยาถูกต้อง หรือ กินยาไม่ถูกต้อง
+  incorrectReason?: string; // สาเหตุหากกินยาไม่ถูกต้อง (เช่น ลืมกินยา, ผลข้างเคียง, หยุดยาเอง)
+  missedDosesCount?: number; // จำนวนมื้อที่ลืมกินยา
+  dispensedBy?: string; // เภสัชกรผู้จ่ายยา
+  nurseRequisitionBy?: string; // พยาบาลผู้ส่งใบเบิกยา
+  dispensedItems?: DispensedItem[]; // รายการยาและจำนวนเม็ดที่จ่าย
+  nextAppointmentDate?: string; // วันที่นัดติดตามครั้งต่อไป
+  notes?: string; // บันทึกเพิ่มเติม หรือ ผลการติดตาม
+  sideEffectsNoted?: string; // อาการข้างเคียงที่ตรวจพบ
+}
+
+export interface PatientCustomDoses {
+  hTabs?: number; // Isoniazid (100mg) เม็ด
+  rTabs?: number; // Rifampicin แคปซูล
+  zTabs?: number; // Pyrazinamide (500mg) เม็ด
+  eTabs?: number; // Ethambutol (400mg) เม็ด
+  vitBcoSig?: string; // e.g. "1*3 pc"
+  fdcTabs?: number; // 4FDC เม็ด
+  mode?: 'split' | 'fdc';
+}
+
 export interface Patient {
   id: string;
   hn: string;
@@ -58,6 +92,13 @@ export interface Patient {
   dotType: 'Hospital DOT' | 'Health Center DOT' | 'Family DOT' | 'V-DOT' | 'Self-administered';
   concomitantMeds?: string[];
   scr?: number;
+  nextAppointmentDate?: string; // วันที่นัดครั้งถัดไป
+  phoneNumber?: string; // เบอร์โทรศัพท์ผู้ป่วย/ญาติ
+  visits: PatientVisit[]; // ประวัติการเบิกและรับยาทุก Visit
+  hosxpNotes?: string; // บันทึกการบริบาลเภสัชกรรมจากระบบ HosXP
+  hosxpLastUpdated?: string; // วันเวลาที่อัปเดตข้อมูล HosXP ล่าสุด
+  hosxpUpdatedBy?: string; // ผู้บันทึกข้อมูล HosXP
+  customDoses?: PatientCustomDoses; // สูตรยาและจำนวนเม็ดที่เภสัชกรปรับแต่งรายบุคคล
   lft?: {
     ast: number;
     alt: number;

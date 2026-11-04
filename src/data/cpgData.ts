@@ -397,6 +397,11 @@ export const INITIAL_PATIENTS: Patient[] = [
     extendedMonths: 0,
     adherenceRate: 98,
     dotType: "Hospital DOT",
+    phoneNumber: "081-234-5678",
+    nextAppointmentDate: "2026-11-04",
+    hosxpNotes: "[HosXP Pharmacist Note - รพ.เขาชัยสน]\nผู้ป่วยหญิง 42 ปี วินิจฉัย Pulmonary TB เกิด DILI จากสูตร 4FDC เดิม (AST 210, ALT 245 U/L)\n- วันนี้มาตามนัด LFT ล่าสุด AST 32, ALT 28 (Normal) Re-challenge H (300 mg/d) ผ่านเรียบร้อยดี\n- กำลังอยู่ในขั้นตอน Re-challenge R (450 mg/d ตาม BW 38.6 kg) ร่วมกับ E (600 mg/d) และ B6 (50 mg/d)\n- ตรวจนับเม็ดยาคงเหลือ ทานยาถูกต้องครบถ้วน 100% ไม่มีลืมมื้อยา ปัสสาวะสีส้มแดงปกติ ผู้ป่วยรับทราบและปฏิบัติตามคำแนะนำดีมาก",
+    hosxpLastUpdated: "2026-10-29 10:15",
+    hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["Pyridoxine 50 mg OD", "Omeprazole 20 mg OD"],
     scr: 0.65,
     lft: {
@@ -414,6 +419,101 @@ export const INITIAL_PATIENTS: Patient[] = [
       zPassed: false,
       notes: "ผ่าน Re-challenge H (300 mg/d) เอนไซม์ตับปกติ ขณะนี้เริ่ม R 450 mg/d สัปดาห์แรก"
     },
+    visits: [
+      {
+        id: "VISIT-001-1",
+        visitDate: "2026-09-01",
+        weight: 39.5,
+        regimen: "4FDC (Rimstar) 3 เม็ด/วัน",
+        daysOfSupply: 30,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "4FDC (HRZE)", quantity: "90 เม็ด", instructions: "รับประทานครั้งละ 3 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า" },
+          { drugName: "Pyridoxine 50 mg", quantity: "30 เม็ด", instructions: "รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหารเช้า" }
+        ],
+        nextAppointmentDate: "2026-10-01",
+        notes: "เริ่มการรักษาผู้ป่วยรายใหม่ นัดตรวจติดตาม 1 เดือน",
+        sideEffectsNoted: "ยังไม่มีอาการผิดปกติ"
+      },
+      {
+        id: "VISIT-001-2",
+        visitDate: "2026-10-01",
+        weight: 38.0,
+        regimen: "Hold all TB drugs (Post-DILI)",
+        daysOfSupply: 14,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Omeprazole 20 mg", quantity: "14 แคปซูล", instructions: "รับประทานครั้งละ 1 แคปซูล ก่อนอาหารเช้า" }
+        ],
+        nextAppointmentDate: "2026-10-15",
+        notes: "เกิดภาวะตับอักเสบ AST 210, ALT 245 U/L สั่งหยุดยา TB ทั้งหมดทันทีเพื่อ Washout",
+        sideEffectsNoted: "คลื่นไส้ ตาเหลืองเล็กน้อย ปวดท้องใต้ชายโครงขวา"
+      },
+      {
+        id: "VISIT-001-3",
+        visitDate: "2026-10-15",
+        weight: 38.2,
+        regimen: "Re-challenge Step 2: Isoniazid (H)",
+        daysOfSupply: 7,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Isoniazid (100 mg)", quantity: "21 เม็ด", instructions: "รับประทานครั้งละ 3 เม็ด วันละ 1 ครั้ง ก่อนอาหารเช้า (300 mg)" },
+          { drugName: "Pyridoxine 50 mg", quantity: "7 เม็ด", instructions: "รับประทานครั้งละ 1 เม็ด วันละ 1 ครั้ง หลังอาหาร" }
+        ],
+        nextAppointmentDate: "2026-10-22",
+        notes: "ผล LFT ฟื้นตัวดี AST 38, ALT 35 U/L เริ่ม Re-challenge ยา H ขนานแรก",
+        sideEffectsNoted: "มีอาการชาปลายเท้าเล็กน้อย เพิ่ม B6 เป็น 50 mg"
+      },
+      {
+        id: "VISIT-001-4",
+        visitDate: "2026-10-22",
+        weight: 38.6,
+        regimen: "Re-challenge Step 3: H + Rifampicin (R) + E",
+        daysOfSupply: 7,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Isoniazid 100 mg", quantity: "21 เม็ด", instructions: "3 เม็ด OD ก่อนอาหาร (300 mg)" },
+          { drugName: "Rifampicin 450 mg", quantity: "7 แคปซูล", instructions: "1 แคปซูล OD ก่อนอาหาร (450 mg ตาม BW < 50kg)" },
+          { drugName: "Ethambutol 400 mg", quantity: "14 เม็ด", instructions: "1.5 เม็ด OD หลังอาหาร (600 mg)" },
+          { drugName: "Pyridoxine 50 mg", quantity: "7 เม็ด", instructions: "1 เม็ด OD หลังอาหาร" }
+        ],
+        nextAppointmentDate: "2026-10-29",
+        notes: "ผ่าน H ได้เรียบร้อย เพิ่ม R 450 mg + E 600 mg นัดติดตาม LFT ใน 1 สัปดาห์",
+        sideEffectsNoted: "ปัสสาวะสีส้มแดงปกติ ไม่มีคลื่นไส้"
+      },
+      {
+        id: "VISIT-001-5",
+        visitDate: "2026-10-29",
+        weight: 38.6,
+        regimen: "2HRE / 7HR (ตับอักเสบ งด Z)",
+        daysOfSupply: 7,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Isoniazid 100 mg", quantity: "21 เม็ด", instructions: "3 เม็ด OD ก่อนอาหาร" },
+          { drugName: "Rifampicin 450 mg", quantity: "7 แคปซูล", instructions: "1 แคปซูล OD ก่อนอาหาร" },
+          { drugName: "Ethambutol 400 mg", quantity: "14 เม็ด", instructions: "1.5 เม็ด OD หลังอาหาร" },
+          { drugName: "Vit B co", quantity: "21 เม็ด", instructions: "1*3 pc หลังอาหาร (3 เม็ด/วัน)" }
+        ],
+        nextAppointmentDate: "2026-11-04",
+        notes: "ผู้ป่วยทนต่อสูตรยา HRE ได้ดี LFT ปกติ นัดติดตามวันนี้เพื่อเจาะ LFT ซ้ำและรับยาเพิ่ม",
+        sideEffectsNoted: "ไม่มีอาการคลื่นไส้อาเจียน ตาไม่เหลือง"
+      }
+    ],
     adrRecords: [
       {
         id: "ADR-001",
@@ -431,7 +531,7 @@ export const INITIAL_PATIENTS: Patient[] = [
         drug: "Isoniazid (H)",
         reaction: "Peripheral Numbness (อาการชาปลายมือปลายเท้า)",
         severity: "Mild",
-        action: "ปรับเพิ่ม Pyridoxine (Vitamin B6) จาก 10 mg เป็น 50 mg/day อาการดีขึ้น",
+        action: "จ่าย Vit B co 1*3 pc (วันละ 3 เม็ด หลังอาหาร) ทดแทน Vit B6 อาการชาดีขึ้น",
         status: "Resolved",
         reporter: "พว.สมใจ ใจดี (พยาบาลคลินิกวัณโรค)"
       }
@@ -445,7 +545,7 @@ export const INITIAL_PATIENTS: Patient[] = [
         subjective: "ผู้ป่วยหญิงไทย 42 ปี ไม่มีอาการคลื่นไส้ อาเจียน ไม่อ่อนเพลีย ตาไม่เหลือง ปัสสาวะสีส้มแดงปกติหลังเริ่ม R",
         objective: "BW 38.6 kg, BP 118/74 mmHg, LFT ล่าสุด: AST 32 U/L, ALT 28 U/L, T.Bili 0.8 mg/dL (Normal). SpO2 98%",
         assessment: "ผู้ป่วยเกิด DILI เดิมจากสูตร 4FDC สงสัย Z เป็นหลัก ขณะนี้ทำ Re-challenge H 300 mg/day ครบ 1 สัปดาห์ LFT ปกติ จึงก้าวสู่ Step 3 เริ่ม R 450 mg/day (ตาม BW 38.6 kg)",
-        plan: "1. ให้ R (450 mg) + H (300 mg) + E (600 mg) + Pyridoxine 50 mg\n2. นัดเจาะ LFT ซ้ำอีก 1 สัปดาห์ (2 พ.ย. 2026)\n3. แนะนำสังเกตอาการเบื่ออาหาร คลื่นไส้ ตาเหลือง หากมีให้หยุดยาทันทีแล้วมา รพ."
+        plan: "1. ให้ R (450 mg) + H (300 mg) + E (600 mg) + Vit B co 1*3 pc (ทดแทน Vit B6 ตามคลังยา รพ.เขาชัยสน)\n2. นัดเจาะ LFT ซ้ำอีก 1 สัปดาห์ (4 พ.ย. 2026)\n3. แนะนำสังเกตอาการเบื่ออาหาร คลื่นไส้ ตาเหลือง หากมีให้หยุดยาทันทีแล้วมา รพ."
       }
     ],
     multidisciplinaryNotes: [
@@ -505,6 +605,11 @@ export const INITIAL_PATIENTS: Patient[] = [
     extendedMonths: 0,
     adherenceRate: 96,
     dotType: "V-DOT",
+    phoneNumber: "089-876-5432",
+    nextAppointmentDate: "2026-11-12",
+    hosxpNotes: "[HosXP Pharmacist Note - รพ.เขาชัยสน]\nผู้ป่วยชาย 58 ปี MDR-TB ตอบสนองต่อสูตร Bdq-based ดีมาก Sputum AFB เดือนที่ 4, 5 เป็นลบ ตรวจ EKG QTc 435 ms ปกติ ไม่พบหัวใจเต้นผิดจังหวะ ผิวคล้ำเล็กน้อยจาก Clofazimine ผู้ป่วยรับประทานยาถูกต้องตรงเวลาดีมาก สม่ำเสมอผ่าน V-DOTs",
+    hosxpLastUpdated: "2026-10-22 14:20",
+    hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["Amlodipine 5 mg OD", "Potassium Chloride 500 mg OD"],
     scr: 0.92,
     lft: {
@@ -513,6 +618,45 @@ export const INITIAL_PATIENTS: Patient[] = [
       tbili: 0.6,
       date: "2026-10-22"
     },
+    visits: [
+      {
+        id: "VISIT-002-1",
+        visitDate: "2026-06-15",
+        weight: 56.5,
+        regimen: "Shorter Bdq Regimen (Intensive)",
+        daysOfSupply: 14,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Bedaquiline 100 mg", quantity: "56 เม็ด", instructions: "4 เม็ด OD พร้อมอาหาร" },
+          { drugName: "Levofloxacin 500 mg", quantity: "28 เม็ด", instructions: "2 เม็ด OD" }
+        ],
+        nextAppointmentDate: "2026-06-29",
+        notes: "เริ่มสูตรสั้น MDR-TB ตรวจ EKG Baseline QTc 418 ms"
+      },
+      {
+        id: "VISIT-002-2",
+        visitDate: "2026-10-22",
+        weight: 58.9,
+        regimen: "Shorter Bdq Regimen (Continuation)",
+        daysOfSupply: 21,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "Levofloxacin 500 mg", quantity: "42 เม็ด", instructions: "2 เม็ด OD" },
+          { drugName: "Clofazimine 100 mg", quantity: "21 แคปซูล", instructions: "1 แคปซูล OD" },
+          { drugName: "Pyrazinamide 500 mg", quantity: "63 เม็ด", instructions: "3 เม็ด OD" },
+          { drugName: "Ethambutol 400 mg", quantity: "63 เม็ด", instructions: "3 เม็ด OD" }
+        ],
+        nextAppointmentDate: "2026-11-12",
+        notes: "เดือนที่ 5 ผลเสมหะ AFB เป็นลบ EKG QTc 435 ms ปกติ",
+        sideEffectsNoted: "ผิวหนังคล้ำอมส้มเล็กน้อย"
+      }
+    ],
     adrRecords: [
       {
         id: "ADR-101",
@@ -575,8 +719,63 @@ export const INITIAL_PATIENTS: Patient[] = [
     extendedMonths: 2,
     adherenceRate: 85,
     dotType: "Health Center DOT",
+    phoneNumber: "084-555-1234",
+    nextAppointmentDate: "2026-11-01",
+    hosxpNotes: "[HosXP Pharmacist Note - รพ.เขาชัยสน]\nผู้ป่วยชาย 65 ปี Sputum AFB เดือนที่ 2 ยังเป็นบวก (1+) ซักประวัติพบมีลืมทานยาวันหยุดสัปดาห์ละ 1-2 ครั้งเนื่องจากไปสวนยาง ได้ให้คำแนะนำเน้นย้ำความสำคัญของการรับประทานยาอย่างเคร่งครัดทุกวัน และประสาน รพ.สต. ในพื้นที่ให้ช่วยกำกับ DOTs อย่างใกล้ชิด ขณะนี้ขาดนัด 3 วัน ได้ประสานงานพยาบาลคลินิก TB โทรติดตามตัว",
+    hosxpLastUpdated: "2026-10-10 11:45",
+    hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["Enalapril 5 mg OD", "Allopurinol 100 mg OD (Hold)"],
     scr: 1.15,
+    visits: [
+      {
+        id: "VISIT-003-1",
+        visitDate: "2026-08-10",
+        weight: 51.5,
+        regimen: "4FDC 3 เม็ด/วัน",
+        daysOfSupply: 30,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "90 เม็ด" }],
+        nextAppointmentDate: "2026-09-10",
+        notes: "เริ่มยาเดือนแรก"
+      },
+      {
+        id: "VISIT-003-2",
+        visitDate: "2026-09-10",
+        weight: 52.0,
+        regimen: "4FDC 3 เม็ด/วัน",
+        daysOfSupply: 30,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "incorrect",
+        incorrectReason: "ลืมกินยาวันหยุดสัปดาห์ละ 1-2 ครั้งช่วงไปสวนยาง",
+        missedDosesCount: 4,
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "90 เม็ด" }],
+        nextAppointmentDate: "2026-10-10",
+        notes: "นัดตรวจเสมหะสิ้นสุดเดือนที่ 2 ผู้ป่วยยอมรับลืมทานยาบางมื้อ",
+        sideEffectsNoted: "ไม่มีอาการแพ้ แต่มีลืมทานยา"
+      },
+      {
+        id: "VISIT-003-3",
+        visitDate: "2026-10-10",
+        weight: 52.0,
+        regimen: "2HRZE / 6HR (ขยายเวลาเพิ่ม 2 เดือน)",
+        daysOfSupply: 21,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "incorrect",
+        incorrectReason: "ลืมทานยา 2 มื้อช่วงเสาร์-อาทิตย์",
+        missedDosesCount: 2,
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "63 เม็ด" }, { drugName: "Pyridoxine 50 mg", quantity: "21 เม็ด" }],
+        nextAppointmentDate: "2026-11-01",
+        notes: "เสมหะเดือนที่ 2 ยังเป็นบวก ขยายเวลาการรักษาและจ่ายยา 21 วัน ประสาน DOTs รพ.สต.",
+        sideEffectsNoted: "มีไอแห้งๆ ลืมทานยา"
+      }
+    ],
     adrRecords: [],
     soapNotes: [
       {
@@ -604,6 +803,11 @@ export const INITIAL_PATIENTS: Patient[] = [
         id: "ALT-SPUTUM-POS",
         type: "Critical",
         text: "🚨 Sputum AFB (+) ในเดือนที่ 2 ขยายเวลาการรักษาเพิ่ม 2 เดือน และส่งตรวจเพาะเชื้อทดสอบความไวต่อยา (DST)"
+      },
+      {
+        id: "ALT-OVERDUE",
+        type: "Critical",
+        text: "⚠️ ขาดนัดติดตาม! เลยกำหนดนัดเมื่อ 2026-11-01 (3 วันที่แล้ว) เสี่ยงขาดยา ต้องรีบโทรติดตาม"
       }
     ]
   },
@@ -628,8 +832,34 @@ export const INITIAL_PATIENTS: Patient[] = [
     extendedMonths: 0,
     adherenceRate: 100,
     dotType: "Hospital DOT",
+    phoneNumber: "086-777-8899",
+    nextAppointmentDate: "2026-11-07",
+    hosxpNotes: "[HosXP Pharmacist Note - รพ.เขาชัยสน]\nผู้ป่วยชาย 36 ปี TB ร่วมกับ HIV ได้รับสูตร 2HRZE + TLD เภสัชกรได้ตรวจพบ DDI รุนแรงระหว่าง Rifampicin กับ Dolutegravir ได้ทำการเพิ่ม Double Dose DTG 50 mg วันละ 2 ครั้งเรียบร้อยแล้ว แนะนำผู้ป่วยแยกมื้อทานยา TB เช้าก่อนอาหาร ยา HIV เย็นหลังอาหาร ผู้ป่วยเข้าใจดีมาก",
+    hosxpLastUpdated: "2026-10-24 09:30",
+    hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["TLD (Tenofovir/Lamivudine/Dolutegravir 50mg) OD", "Dolutegravir 50 mg (เพิ่ม dose เย็น)", "Cotrimoxazole 1 tab OD"],
     scr: 0.88,
+    visits: [
+      {
+        id: "VISIT-004-1",
+        visitDate: "2026-10-24",
+        weight: 62.4,
+        regimen: "4FDC 4 เม็ด + Double Dose DTG",
+        daysOfSupply: 14,
+        dispenseStatus: "Dispensed",
+        medicationTakingStatus: "correct",
+        dispensedBy: "ภก.วิชัย ชื่นกมล",
+        nurseRequisitionBy: "พว.สมใจ ใจดี",
+        dispensedItems: [
+          { drugName: "4FDC (HRZE)", quantity: "56 เม็ด", instructions: "4 เม็ด OD ก่อนอาหารเช้า" },
+          { drugName: "Dolutegravir 50 mg", quantity: "14 เม็ด", instructions: "1 เม็ด OD ตอนเย็น (เสริม dose ที่สองเนื่องจากทาน Rifampicin)" },
+          { drugName: "Pyridoxine 50 mg", quantity: "14 เม็ด", instructions: "1 เม็ด OD หลังอาหาร" }
+        ],
+        nextAppointmentDate: "2026-11-07",
+        notes: "เริ่มยา TB ร่วมกับยาต้านไวรัส HIV นัดติดตาม 2 สัปดาห์",
+        sideEffectsNoted: "ไม่มีอาการแพ้ยา"
+      }
+    ],
     adrRecords: [],
     soapNotes: [
       {

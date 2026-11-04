@@ -338,11 +338,11 @@ export const DosingCalculator: React.FC = () => {
                   </div>
                 ))}
 
-                {/* Pyridoxine reminder */}
+                {/* Vit B co (ทดแทน Vit B6 ตามคลังยา รพ.เขาชัยสน) */}
                 <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-950 flex items-start gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
-                    <strong className="font-bold">วิตามินเสริมเสมอ:</strong> Pyridoxine (Vitamin B6) 50 - 100 mg วันละ 1 เม็ด เพื่อป้องกันอาการปลายประสาทอักเสบจากยา Isoniazid (INH)
+                    <strong className="font-bold">วิตามินเสริมเสมอ (รพ.เขาชัยสน):</strong> Vit B co (Vitamin B Complex) รับประทานครั้งละ 1 เม็ด วันละ 3 ครั้ง หลังอาหาร (1*3 pc รวม 3 เม็ด/วัน) ทดแทน Vit B6 ตามคลังยา เพื่อป้องกันอาการปลายประสาทอักเสบจากยา Isoniazid (INH)
                   </div>
                 </div>
               </div>

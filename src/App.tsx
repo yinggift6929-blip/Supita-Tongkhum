@@ -4,6 +4,10 @@ import { PatientRegistry } from './components/PatientRegistry';
 import { DosingCalculator } from './components/DosingCalculator';
 import { RechallengeManager } from './components/RechallengeManager';
 import { GuidelinesLibrary } from './components/GuidelinesLibrary';
+import { UpcomingAppointmentsModal } from './components/UpcomingAppointmentsModal';
+import { ExcelUploadModal } from './components/ExcelUploadModal';
+import { AddVisitModal } from './components/AddVisitModal';
+import { MonthlyDashboard } from './components/MonthlyDashboard';
 import { 
   CheerUpModal, 
   NewPatientModal, 
@@ -12,14 +16,21 @@ import {
   PrintSummaryModal 
 } from './components/Modals';
 import { INITIAL_PATIENTS } from './data/cpgData';
-import { Patient, ADRRecord, SOAPNote } from './types/tb';
+import { Patient, PatientVisit, ADRRecord, SOAPNote } from './types/tb';
+import { ParsedRequisitionRow } from './utils/excelImport';
 
 export default function App() {
   const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
   const [selectedPatientId, setSelectedPatientId] = useState<string>(INITIAL_PATIENTS[0].id);
-  const [activeTab, setActiveTab] = useState<'registry' | 'calculator' | 'rechallenge' | 'guidelines'>('registry');
+  const [activeTab, setActiveTab] = useState<'registry' | 'calculator' | 'rechallenge' | 'guidelines' | 'dashboard'>('registry');
 
   // Modal Visibility States
+  // Pop-up shows on initial load before entering app as requested!
+  const [showAppointmentsModal, setShowAppointmentsModal] = useState<boolean>(true);
+  const [showExcelModal, setShowExcelModal] = useState<boolean>(false);
+  const [showAddVisitModal, setShowAddVisitModal] = useState<boolean>(false);
+  const [targetVisitPatientId, setTargetVisitPatientId] = useState<string>(INITIAL_PATIENTS[0].id);
+
   const [showCheerUpModal, setShowCheerUpModal] = useState<boolean>(false);
   const [showNewPatientModal, setShowNewPatientModal] = useState<boolean>(false);
   const [showAdrModal, setShowAdrModal] = useState<boolean>(false);
@@ -27,6 +38,7 @@ export default function App() {
   const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
+  const targetVisitPatient = patients.find(p => p.id === targetVisitPatientId) || selectedPatient;
 
   // Handler: Toggle Sputum AFB Status (+ / -)
   const handleToggleSputumStatus = (patientId: string) => {
@@ -165,6 +177,9 @@ export default function App() {
       extendedMonths: 0,
       adherenceRate: 100,
       dotType: newPatientData.dotType || 'Hospital DOT',
+      phoneNumber: newPatientData.phoneNumber || '',
+      nextAppointmentDate: newPatientData.nextAppointmentDate || '',
+      visits: [],
       concomitantMeds: [],
       adrRecords: [],
       soapNotes: [],
@@ -200,6 +215,244 @@ export default function App() {
     }));
   };
 
+  // Handler: Add Single Visit
+  const handleAddVisit = (patientId: string, visit: PatientVisit) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        const newWeight = visit.weight || p.weight;
+        const newBmi = p.height > 0 ? parseFloat((newWeight / Math.pow(p.height / 100, 2)).toFixed(1)) : p.bmi;
+
+        let updatedAlerts = [...p.alerts];
+        if (visit.nextAppointmentDate && visit.nextAppointmentDate >= '2026-11-04') {
+          // Clear overdue alert if newly scheduled
+          updatedAlerts = updatedAlerts.filter(a => !a.text.includes('ขาดนัด'));
+        }
+
+        return {
+          ...p,
+          weight: newWeight,
+          bmi: newBmi,
+          regimenName: visit.regimen || p.regimenName,
+          nextAppointmentDate: visit.nextAppointmentDate || p.nextAppointmentDate,
+          visits: [...(p.visits || []), visit],
+          alerts: updatedAlerts,
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: visit.visitDate,
+              sender: 'ภก.คลินิก (เภสัชกร)',
+              role: 'Pharmacist',
+              text: `บันทึกการรับยา Visit ใหม่: วันที่ ${visit.visitDate}, น้ำหนัก ${newWeight} kg, สูตร ${visit.regimen}, จ่ายยา ${visit.daysOfSupply} วัน, นัดติดตาม ${visit.nextAppointmentDate || 'ไม่ระบุ'}`
+            },
+            ...p.multidisciplinaryNotes
+          ]
+        };
+      }
+      return p;
+    }));
+    setShowAddVisitModal(false);
+  };
+
+  // Handler: Mark Visit as Dispensed
+  const handleMarkVisitDispensed = (patientId: string, visitId: string) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        return {
+          ...p,
+          visits: (p.visits || []).map(v => 
+            v.id === visitId 
+              ? { ...v, dispenseStatus: 'Dispensed' as const, dispensedBy: 'ภก.วิชัย ชื่นกมล (ภก.คลินิก)' } 
+              : v
+          )
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Handler: Update Next Appointment Date directly
+  const handleUpdateNextAppointment = (patientId: string, nextDate: string) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        let updatedAlerts = [...p.alerts];
+        if (nextDate >= '2026-11-04') {
+          updatedAlerts = updatedAlerts.filter(a => !a.text.includes('ขาดนัด'));
+        }
+
+        return {
+          ...p,
+          nextAppointmentDate: nextDate,
+          alerts: updatedAlerts,
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: new Date().toISOString().split('T')[0],
+              sender: 'ภก.คลินิก (เภสัชกร)',
+              role: 'Pharmacist',
+              text: `ปรับเปลี่ยนวันนัดติดตามผู้ป่วยเป็น: ${nextDate}`
+            },
+            ...p.multidisciplinaryNotes
+          ]
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Handler: Update HosXP Pharmaceutical Care Notes (User Request #1)
+  const handleSaveHosxpNotes = (patientId: string, notes: string) => {
+    const now = new Date();
+    const timeStr = `${now.toISOString().split('T')[0]} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        return {
+          ...p,
+          hosxpNotes: notes,
+          hosxpLastUpdated: timeStr,
+          hosxpUpdatedBy: 'ภก.วิชัย ชื่นกมล (ภก.คลินิก)',
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: now.toISOString().split('T')[0],
+              sender: 'ภก.คลินิก (HosXP)',
+              role: 'Pharmacist',
+              text: `[บันทึก HosXP] ปรับปรุงข้อมูลการบริบาลเภสัชกรรม: ${notes.slice(0, 80)}...`
+            },
+            ...p.multidisciplinaryNotes
+          ]
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Handler: Update Patient Regimen & Tablet Dosing
+  const handleUpdatePatientRegimen = (patientId: string, updatedRegimen: string, customDoses?: any) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        return {
+          ...p,
+          regimenName: updatedRegimen,
+          customDoses,
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: new Date().toISOString().split('T')[0],
+              sender: 'ภก.คลินิก (เภสัชกร)',
+              role: 'Pharmacist',
+              text: `[ปรับสูตรยา & จำนวนเม็ด] ปรับขนาดยาประจำตัวผู้ป่วยเป็น: ${updatedRegimen}`
+            },
+            ...p.multidisciplinaryNotes
+          ]
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Handler: Import Excel Weekly Requisitions
+  const handleImportExcelVisits = (importedRows: ParsedRequisitionRow[]) => {
+    let updatedList = [...patients];
+
+    importedRows.forEach(row => {
+      // Find matching patient
+      const matchIndex = updatedList.findIndex(
+        p => (row.hn && p.hn.includes(row.hn)) || (row.name && p.name.includes(row.name))
+      );
+
+      const visitObj: PatientVisit = {
+        id: `VISIT-IMP-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        visitDate: row.visitDate,
+        weight: row.weight,
+        regimen: row.regimen,
+        daysOfSupply: row.daysOfSupply,
+        dispenseStatus: 'Dispensed',
+        dispensedBy: 'ภก.วิชัย ชื่นกมล (นำเข้าจากไฟล์เบิกยา)',
+        nurseRequisitionBy: row.nurseRequisitionBy || 'พยาบาลคลินิก TB รพ.เขาชัยสน',
+        dispensedItems: row.dispensedItemsText ? [{ drugName: row.dispensedItemsText, quantity: '' }] : [],
+        nextAppointmentDate: row.nextAppointmentDate,
+        notes: row.notes,
+        sideEffectsNoted: 'นำเข้าจากไฟล์ใบเบิกยาพยาบาล',
+        medicationTakingStatus: 'correct'
+      };
+
+      if (matchIndex >= 0) {
+        // Update existing patient
+        const existing = updatedList[matchIndex];
+        const newWeight = row.weight > 0 ? row.weight : existing.weight;
+        const newBmi = existing.height > 0 ? parseFloat((newWeight / Math.pow(existing.height / 100, 2)).toFixed(1)) : existing.bmi;
+
+        updatedList[matchIndex] = {
+          ...existing,
+          weight: newWeight,
+          bmi: newBmi,
+          regimenName: row.regimen || existing.regimenName,
+          nextAppointmentDate: row.nextAppointmentDate || existing.nextAppointmentDate,
+          visits: [...(existing.visits || []), visitObj],
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: row.visitDate,
+              sender: row.nurseRequisitionBy || 'พว.สมใจ (พยาบาล TB)',
+              role: 'Nurse',
+              text: `[ใบเบิกยา Excel] ขอเบิกยา ${row.regimen} จำนวน ${row.daysOfSupply} วัน น้ำหนัก ${row.weight} kg นัดครั้งต่อไป ${row.nextAppointmentDate || 'ไม่ระบุ'}`
+            },
+            ...existing.multidisciplinaryNotes
+          ]
+        };
+      } else {
+        // Create new patient from requisition
+        const newPatient: Patient = {
+          id: `TB-69-00${updatedList.length + 1}`,
+          hn: row.hn || `${Math.floor(100000000 + Math.random() * 900000000)}`,
+          name: row.name || 'ผู้ป่วยใหม่ (จากใบเบิกยา)',
+          age: 45,
+          gender: 'ชาย',
+          weight: row.weight || 50,
+          height: 160,
+          bmi: 19.5,
+          patientType: 'New Case (DS-TB)',
+          hivStatus: 'Negative',
+          diagnosis: 'Pulmonary TB',
+          regimenId: 'STD_2HRZE_4HR_STD',
+          regimenName: row.regimen || '2(HRZE) / 4(HR)',
+          regimenMonths: 6,
+          monthOfTreatment: 1,
+          sputumStatus: 'Negative',
+          extendedPhase: false,
+          extendedMonths: 0,
+          adherenceRate: 100,
+          dotType: 'Hospital DOT',
+          nextAppointmentDate: row.nextAppointmentDate,
+          visits: [visitObj],
+          concomitantMeds: [],
+          adrRecords: [],
+          soapNotes: [],
+          multidisciplinaryNotes: [
+            {
+              id: `MDT-${Date.now()}`,
+              date: row.visitDate,
+              sender: row.nurseRequisitionBy || 'พว.สมใจ (พยาบาล TB)',
+              role: 'Nurse',
+              text: `ลงทะเบียนผู้ป่วยจากการนำเข้าไฟล์เบิกยา: ${row.regimen} (${row.daysOfSupply} วัน)`
+            }
+          ],
+          alerts: row.weight < 50 ? [{ id: `ALT-${Date.now()}`, type: 'Warning', text: 'น้ำหนักตัวน้อย (< 50 kg) แนะนำคำนวณแยกเม็ดตามน้ำหนักตัวจริง' }] : []
+        };
+        updatedList = [newPatient, ...updatedList];
+      }
+    });
+
+    setPatients(updatedList);
+  };
+
+  // Open Add Visit Modal for a specific patient
+  const handleOpenAddVisitModal = (patientId: string) => {
+    setTargetVisitPatientId(patientId);
+    setShowAddVisitModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-800 flex flex-col font-sans antialiased selection:bg-teal-500 selection:text-white">
       {/* APP HEADER & NAVIGATION */}
@@ -209,6 +462,8 @@ export default function App() {
         patients={patients}
         onOpenNewPatientModal={() => setShowNewPatientModal(true)}
         onOpenPrintModal={() => setShowPrintModal(true)}
+        onOpenExcelModal={() => setShowExcelModal(true)}
+        onOpenAppointmentsModal={() => setShowAppointmentsModal(true)}
       />
 
       {/* MAIN BODY WORKSPACE */}
@@ -224,6 +479,21 @@ export default function App() {
             onOpenSoapModal={() => setShowSoapModal(true)}
             onAddMultiNote={handleAddMultiNote}
             onAdvanceMonth={handleAdvanceMonth}
+            onOpenAddVisitModal={handleOpenAddVisitModal}
+            onMarkVisitDispensed={handleMarkVisitDispensed}
+            onUpdateNextAppointment={handleUpdateNextAppointment}
+            onUpdateHosxpNotes={handleSaveHosxpNotes}
+            onUpdatePatientRegimen={handleUpdatePatientRegimen}
+          />
+        )}
+
+        {activeTab === 'dashboard' && (
+          <MonthlyDashboard
+            patients={patients}
+            onSelectPatient={(id) => {
+              setSelectedPatientId(id);
+              setActiveTab('registry');
+            }}
           />
         )}
 
@@ -248,15 +518,46 @@ export default function App() {
       <footer className="border-t border-slate-200 bg-white py-4 px-4 text-center text-xs text-slate-500 no-print">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
           <span>
-            TB Pharmacy Care Hub © 2026 • ออกแบบตามแนวทางการควบคุมวัณโรคประเทศไทย พ.ศ. 2564 (Thailand CPG 2021)
+            TB Pharmacy Care Hub • โรงพยาบาลเขาชัยสน จังหวัดพัทลุง © 2026
           </span>
           <span className="font-medium text-teal-800">
-            กรมควบคุมโรค กระทรวงสาธารณสุข & สมาคมปราบวัณโรคแห่งประเทศไทย
+            ระบบบริบาลผู้ป่วยวัณโรค & การเบิกจ่ายยาร่วมระหว่างพยาบาลและเภสัชกร (Thailand CPG 2021)
           </span>
         </div>
       </footer>
 
-      {/* MODALS */}
+      {/* 🔔 1. UPCOMING APPOINTMENTS POP-UP (DISPLAYS BEFORE ENTERING APP OR ON DEMAND) */}
+      {showAppointmentsModal && (
+        <UpcomingAppointmentsModal
+          patients={patients}
+          onClose={() => setShowAppointmentsModal(false)}
+          onSelectPatient={(id) => {
+            setSelectedPatientId(id);
+            setActiveTab('registry');
+          }}
+          onOpenAddVisitModal={handleOpenAddVisitModal}
+        />
+      )}
+
+      {/* 📊 2. EXCEL WEEKLY REQUISITION UPLOAD MODAL */}
+      {showExcelModal && (
+        <ExcelUploadModal
+          existingPatients={patients}
+          onClose={() => setShowExcelModal(false)}
+          onImportSuccess={handleImportExcelVisits}
+        />
+      )}
+
+      {/* 💊 3. ADD VISIT / RECORD DISPENSE MODAL */}
+      {showAddVisitModal && (
+        <AddVisitModal
+          patient={targetVisitPatient}
+          onClose={() => setShowAddVisitModal(false)}
+          onSubmit={handleAddVisit}
+        />
+      )}
+
+      {/* 4. CHEER UP MODAL */}
       {showCheerUpModal && (
         <CheerUpModal
           patient={selectedPatient}
@@ -264,6 +565,7 @@ export default function App() {
         />
       )}
 
+      {/* 5. NEW PATIENT REGISTRATION MODAL */}
       {showNewPatientModal && (
         <NewPatientModal
           onClose={() => setShowNewPatientModal(false)}
@@ -271,6 +573,7 @@ export default function App() {
         />
       )}
 
+      {/* 6. ADD ADR MODAL */}
       {showAdrModal && (
         <AddAdrModal
           onClose={() => setShowAdrModal(false)}
@@ -278,6 +581,7 @@ export default function App() {
         />
       )}
 
+      {/* 7. ADD SOAP NOTE MODAL */}
       {showSoapModal && (
         <AddSoapModal
           onClose={() => setShowSoapModal(false)}
@@ -285,6 +589,7 @@ export default function App() {
         />
       )}
 
+      {/* 8. PRINTABLE SUMMARY MODAL */}
       {showPrintModal && (
         <PrintSummaryModal
           patient={selectedPatient}

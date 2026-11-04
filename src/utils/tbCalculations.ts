@@ -78,7 +78,7 @@ export function calculateFirstLineDoses(weight: number, crcl?: number): Calculat
       calculatedMg: hMg,
       recommendedMg: hRecommended,
       tabletDispenseThai: hTablets,
-      specialWarning: "ควรเสริม Pyridoxine (Vitamin B6) 50-100 mg/day ในผู้ป่วยเบาหวาน ไตวาย ขาดสารอาหาร หญิงตั้งครรภ์ หรือผู้ติดเชื้อ HIV",
+      specialWarning: "ควรเสริม Vit B co 1*3 pc (วันละ 3 ครั้ง ครั้งละ 1 เม็ด หลังอาหาร รวม 3 เม็ด/วัน) ทดแทน Vit B6 ตามคลังยา รพ.เขาชัยสน เพื่อป้องกันปลายประสาทอักเสบจาก INH",
       renalDoseNote: isRenalFailure ? "CrCl < 30: อาจให้ 300 mg/day หรือ 300 mg สัปดาห์ละ 3 ครั้ง (หลังฟอกเลือด)" : "ไม่ต้องปรับขนาดยา"
     },
     {
@@ -114,6 +114,16 @@ export function calculateFirstLineDoses(weight: number, crcl?: number): Calculat
         : eTablets,
       specialWarning: "ระวังจอประสาทตาอักเสบ (Optic Neuritis) แจ้งผู้ป่วยให้สังเกตอาการตามัว แยกสีแดง-เขียวไม่ออก",
       renalDoseNote: isRenalFailure ? "⚠️ สำคัญมาก: ยาขับออกทางไตสูง ต้องลดความถี่เป็นสัปดาห์ละ 3 ครั้ง เพื่อป้องกันพิษต่อจอประสาทตา" : "ปกติ"
+    },
+    {
+      code: "Bco",
+      drugName: "Vitamin B Complex (Vit B co)",
+      mgPerKgDay: 0,
+      calculatedMg: 0,
+      recommendedMg: 0,
+      tabletDispenseThai: "Vit B co: 1 เม็ด วันละ 3 ครั้ง หลังอาหาร (1*3 pc) [ทดแทน Vit B6]",
+      specialWarning: "รพ.เขาชัยสน ไม่มี Vit B6 ในคลังยา จ่าย Vit B co 1*3 pc (3 เม็ด/วัน) ทดแทน เพื่อป้องกันอาการชาปลายประสาทจาก INH",
+      renalDoseNote: "ไม่ต้องปรับขนาดยา"
     }
   ];
 

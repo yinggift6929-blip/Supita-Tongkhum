@@ -651,7 +651,7 @@ export const PrintSummaryModal: React.FC<PrintSummaryModalProps> = ({ patient, o
         <div className="flex justify-between items-center border-b border-slate-200 pb-3 no-print">
           <div className="flex items-center gap-2">
             <Printer className="w-5 h-5 text-teal-700" />
-            <h3 className="font-extrabold text-base text-slate-900">สรุปเวชระเบียนการบริบาลผู้ป่วยวัณโรค (CPG 2021)</h3>
+            <h3 className="font-extrabold text-base text-slate-900">สรุปเวชระเบียนการบริบาลผู้ป่วยวัณโรค (รพ.เขาชัยสน)</h3>
           </div>
           <div className="flex gap-2">
             <button
@@ -670,18 +670,19 @@ export const PrintSummaryModal: React.FC<PrintSummaryModalProps> = ({ patient, o
         <div className="space-y-4 text-xs font-sans text-slate-800">
           <div className="text-center border-b border-slate-300 pb-3">
             <h2 className="text-base font-black text-slate-950">แบบสรุปการดูแลผู้ป่วยวัณโรคและการใช้ยา (TB Pharmacy Care Summary)</h2>
-            <p className="text-[11px] text-slate-600">อ้างอิงตามแนวทางการควบคุมวัณโรคประเทศไทย พ.ศ. 2564 (Thailand CPG 2021)</p>
+            <p className="text-[11px] text-teal-800 font-bold">โรงพยาบาลเขาชัยสน จังหวัดพัทลุง</p>
+            <p className="text-[10px] text-slate-600">อ้างอิงตามแนวทางการควบคุมวัณโรคประเทศไทย พ.ศ. 2564 (Thailand CPG 2021)</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <div><strong>ชื่อ-นามสกุล:</strong> {patient.name}</div>
             <div><strong>HN:</strong> {patient.hn} (ID: {patient.id})</div>
             <div><strong>อายุ / เพศ:</strong> {patient.age} ปี / {patient.gender}</div>
-            <div><strong>น้ำหนัก / BMI:</strong> {patient.weight} kg / {patient.bmi} kg/m²</div>
+            <div><strong>น้ำหนักปัจจุบัน / BMI:</strong> {patient.weight} kg / {patient.bmi} kg/m²</div>
             <div><strong>การวินิจฉัย:</strong> {patient.diagnosis}</div>
             <div><strong>สถานะเสมหะ AFB:</strong> {patient.sputumStatus}</div>
             <div><strong>สูตรการรักษา:</strong> {patient.regimenName}</div>
-            <div><strong>ระยะเวลาตามแผน:</strong> {stats.regMonths} เดือน (ความก้าวหน้า {stats.percent}%)</div>
+            <div><strong>วันนัดติดตามครั้งถัดไป:</strong> <span className="font-bold text-teal-900">{patient.nextAppointmentDate || 'ไม่ได้ระบุ'}</span></div>
           </div>
 
           <div>
@@ -697,6 +698,62 @@ export const PrintSummaryModal: React.FC<PrintSummaryModalProps> = ({ patient, o
               ))}
             </div>
           </div>
+
+          {/* Visits Table */}
+          {patient.visits && patient.visits.length > 0 && (
+            <div>
+              <h4 className="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-2">
+                ประวัติการเบิกและรับยาทุก Visit ({patient.visits.length} ครั้ง):
+              </h4>
+              <div className="border border-slate-200 rounded-lg overflow-hidden text-[11px]">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-100 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-1.5">วันที่</th>
+                      <th className="p-1.5">น้ำหนัก</th>
+                      <th className="p-1.5">สูตรยา</th>
+                      <th className="p-1.5">จำนวนวัน</th>
+                      <th className="p-1.5">ผลการกินยา</th>
+                      <th className="p-1.5">วันนัดถัดไป</th>
+                      <th className="p-1.5">ผู้จ่ายยา</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium">
+                    {patient.visits.map((v, i) => (
+                      <tr key={v.id || i}>
+                        <td className="p-1.5 font-mono">{v.visitDate}</td>
+                        <td className="p-1.5">{v.weight} kg</td>
+                        <td className="p-1.5">{v.regimen}</td>
+                        <td className="p-1.5">{v.daysOfSupply} วัน</td>
+                        <td className="p-1.5">
+                          {v.medicationTakingStatus === 'incorrect' ? (
+                            <span className="text-rose-700 font-bold">⚠️ ไม่ถูกต้อง ({v.incorrectReason || 'ลืมกิน'})</span>
+                          ) : (
+                            <span className="text-emerald-700 font-bold">✓ ถูกต้อง 100%</span>
+                          )}
+                        </td>
+                        <td className="p-1.5 font-mono">{v.nextAppointmentDate || '-'}</td>
+                        <td className="p-1.5">{v.dispensedBy || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* HosXP Clinical Note */}
+          {patient.hosxpNotes && (
+            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200">
+              <h4 className="font-bold text-blue-950 mb-1 flex items-center gap-1.5">
+                <span>บันทึกการบริบาลเภสัชกรรม (HosXP Pharmaceutical Care):</span>
+              </h4>
+              <p className="text-[11px] text-slate-800 whitespace-pre-line font-mono">{patient.hosxpNotes}</p>
+              <div className="text-[10px] text-blue-800 mt-1">
+                บันทึกโดย: {patient.hosxpUpdatedBy || 'ภก.คลินิก'} | {patient.hosxpLastUpdated || '-'}
+              </div>
+            </div>
+          )}
 
           {patient.adrRecords.length > 0 && (
             <div>
@@ -718,7 +775,7 @@ export const PrintSummaryModal: React.FC<PrintSummaryModalProps> = ({ patient, o
               วันที่พิมพ์: {new Date().toLocaleDateString('th-TH')}
             </div>
             <div className="text-right">
-              ลงชื่อ....................................................... ภก.คลินิก
+              ลงชื่อ....................................................... ภก.คลินิก รพ.เขาชัยสน
             </div>
           </div>
         </div>
