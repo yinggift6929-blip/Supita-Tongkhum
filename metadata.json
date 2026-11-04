@@ -1,0 +1,6 @@
+{
+  "name": "TB Pharmacy Care Hub - Thailand CPG 2021",
+  "description": "ระบบดูแลผู้ป่วยวัณโรค เภสัชกรรมคลินิก ปรับสูตรยาและคำนวณขนาดยาตามแนวทางการควบคุมวัณโรคประเทศไทย พ.ศ. 2564 (Thailand CPG 2021)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

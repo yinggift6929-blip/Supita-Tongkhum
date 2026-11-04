@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TB Pharmacy Care Hub - Thailand CPG 2021</title>
+    
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel CDN for JSX Compilation in Browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Font Prompt/Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+
+        // ============================================================================
+        // CPG 2021 DRUG REGIMENS & DOSING GUIDELINES DATA
+        // ============================================================================
+        const CPG_REGIMENS = [
+          {
+            id: "STD_2HRZE_4HR_LOW",
+            category: "DS-TB",
+            name: "2HRZE / 4HR (BW < 50 kg)",
+            description: "สูตรมาตรฐานผู้ป่วยรายใหม่ ไวต่อยา น้ำหนักตัว < 50 kg (คำนวณแยกเม็ดตามน้ำหนัก)",
+            durationMonths: 6,
+            type: "New / Sensitive",
+            dosingInfo: "H(300mg) + R(450mg) + Z(750-1000mg) + E(600-800mg) ใน 2 เดือนแรก",
+            phase1: "2 เดือน (HRZE)",
+            phase2: "4 เดือน (HR)"
+          },
+          {
+            id: "STD_2HRZE_4HR_STD",
+            category: "DS-TB",
+            name: "HRZE / 4HR (BW ≥ 50 kg)",
+            description: "สูตรมาตรฐานผู้ป่วยรายใหม่ ไวต่อยา น้ำหนักตัว ≥ 50 kg (FDC หรือ Dose มาตรฐาน)",
+            durationMonths: 6,
+            type: "New / Sensitive",
+            dosingInfo: "H(300mg) + R(600mg) + Z(1500mg) + E(1000-1200mg) ใน 2 เดือนแรก",
+            phase1: "2 เดือน (HRZE)",
+            phase2: "4 เดือน (HR)"
+          },
+          {
+            id: "MONO_H_FQ_SENS",
+            category: "DR-TB (Mono/Poly)",
+            name: "6RZEFQs (ดื้อ Isoniazid / ไม่ดื้อ FQs)",
+            description: "ตาราง 6.2: กรณีดื้อ H ขนานเดียว และผลตรวจไวต่อยา FQs",
+            durationMonths: 6,
+            type: "Hr-TB",
+            dosingInfo: "R + Z + E + Lfx/Mfx นาน 6 เดือน",
+            phase1: "6 เดือน (RZE + FQs)",
+            phase2: "-"
+          },
+          {
+            id: "MONO_H_FQ_RES",
+            category: "DR-TB (Mono/Poly)",
+            name: "6RZE (ดื้อ Isoniazid / ดื้อหรือสงสัยดื้อ FQs)",
+            description: "ตาราง 6.2: กรณีดื้อ H ขนานเดียว และดื้อหรือไม่แน่ใจผล FQs",
+            durationMonths: 6,
+            type: "Hr-TB",
+            dosingInfo: "R + Z + E นาน 6 เดือน",
+            phase1: "6 เดือน (RZE)",
+            phase2: "-"
+          },
+          {
+            id: "MONO_Z",
+            category: "DR-TB (Mono/Poly)",
+            name: "2HRE / 7HR (ดื้อ Pyrazinamide)",
+            description: "ตาราง 6.2: กรณีดื้อ Z ขนานเดียว",
+            durationMonths: 9,
+            type: "Mono-Z",
+            dosingInfo: "2 เดือน (HRE) ตามด้วย 7 เดือน (HR)",
+            phase1: "2 เดือน (HRE)",
+            phase2: "7 เดือน (HR)"
+          },
+          {
+            id: "MONO_E",
+            category: "DR-TB (Mono/Poly)",
+            name: "2HRZ / 4HR (ดื้อ Ethambutol)",
+            description: "ตาราง 6.2: กรณีดื้อ E ขนานเดียว",
+            durationMonths: 6,
+            type: "Mono-E",
+            dosingInfo: "2 เดือน (HRZ) ตามด้วย 4 เดือน (HR)",
+            phase1: "2 เดือน (HRZ)",
+            phase2: "4 เดือน (HR)"
+          },
+          {
+            id: "POLY_HZ",
+            category: "DR-TB (Mono/Poly)",
+            name: "9-12 REFQs (ดื้อ H + Z)",
+            description: "ตาราง 6.2: กรณีดื้อ H และ Z พร้อมกัน",
+            durationMonths: 12,
+            type: "Poly-DR",
+            dosingInfo: "R + E + Levofloxacin (หรือ Mfx) นาน 9-12 เดือน",
+            phase1: "9-12 เดือน (REFQs)",
+            phase2: "-"
+          },
+          {
+            id: "POLY_HE",
+            category: "DR-TB (Mono/Poly)",
+            name: "6-9 RZFQs (ดื้อ H + E)",
+            description: "ตาราง 6.2: กรณีดื้อ H และ E พร้อมกัน",
+            durationMonths: 9,
+            type: "Poly-DR",
+            dosingInfo: "R + Z + Levofloxacin (หรือ Mfx) นาน 6-9 เดือน",
+            phase1: "6-9 เดือน (RZFQs)",
+            phase2: "-"
+          },
+          {
+            id: "MDR_SHORTER_ALL_ORAL",
+            category: "MDR/RR-TB",
+            name: "Shorter All-Oral Bdq Regimen (9-11 เดือน)",
+            description: "สูตรสั้นกินล้วนสำหรับ MDR/RR-TB (4-6 Bdq-Lfx-Pto-Cfz-Z-E-Hh / 5 Lfx-Cfz-Z-E)",
+            durationMonths: 11,
+            type: "MDR/RR-TB",
+            dosingInfo: "4-6 เดือน (Bdq+Lfx+Pto+Cfz+Z+E+High-dose H) / 5 เดือน (Lfx+Cfz+Z+E)",
+            phase1: "4-6 เดือน (Bdq-Lfx-Pto-Cfz-Z-E-Hh)",
+            phase2: "5 เดือน (Lfx-Cfz-Z-E)"
+          },
+          {
+            id: "MDR_LONGER_INDIVIDUAL",
+            category: "MDR/RR-TB",
+            name: "Individualized Longer Regimen (≥ 18 เดือน)",
+            description: "สูตรยาวปรับเฉพาะรายจากกลุ่มยา WHO Group A, B, C (อ้างอิง ตาราง 6.1)",
+            durationMonths: 18,
+            type: "MDR/Pre-XDR",
+            dosingInfo: "เลือกใช้อย่างน้อย 4 ขนานในระยะแรก (Group A: Lfx/Mfx, Bdq, Lzd | Group B: Cfz, Cs/Trd)",
+            phase1: "6-8 เดือน (Intensive Phase)",
+            phase2: "12-14 เดือน (Continuation Phase)"
+          },
+          {
+            id: "ADR_HEPATIC_2HEP",
+            category: "Drug Reaction / Allergy",
+            name: "2HRE / 7HR (ตับอักเสบ งด Pyrazinamide)",
+            description: "กรณีเกิด Hepatotoxicity จาก Z หรือต้องหลีกเลี่ยงยาที่มีพิษต่อตับสูง (ใช้ยา Hepatotoxic 2 ชนิด)",
+            durationMonths: 9,
+            type: "Hepato-safe",
+            dosingInfo: "2 เดือน (HRE) ตามด้วย 7 เดือน (HR)",
+            phase1: "2 เดือน (HRE)",
+            phase2: "7 เดือน (HR)"
+          },
+          {
+            id: "ADR_HEPATIC_NON_HEPATOTOXIC",
+            category: "Drug Reaction / Allergy",
+            name: "12-18 HE + Lfx (ตับอักเสบรุนแรง/งด R&Z)",
+            description: "กรณีตับอักเสบรุนแรง (Fulminant) หรือตับแข็งรุนแรง หลีกเลี่ยง R และ Z (ใช้ยา Hepatotoxic 1 ชนิดคือ H)",
+            durationMonths: 18,
+            type: "Hepato-safe",
+            dosingInfo: "H + E + Levofloxacin นาน 12-18 เดือน",
+            phase1: "12-18 เดือน (HE + Lfx)",
+            phase2: "-"
+          }
+        ];
+
+        // Re-challenge protocol guidelines (Chapter 5, Page 62)
+        const RECHALLENGE_STEPS = [
+          { step: 1, text: "หยุดยา TB ทั้งหมด จนกว่า AST/ALT < 2x UNL และ Total Bilirubin < 1.5 mg/dL" },
+          { step: 2, text: "สัปดาห์ที่ 1: เริ่มยา Isoniazid (H) ขนาดปกติ และเจาะ LFT ติดตามเมื่อครบ 1 สัปดาห์" },
+          { step: 3, text: "สัปดาห์ที่ 2: หาก H ปกติ เริ่มยา Rifampicin (R) ขนาดปกติ และเจาะ LFT ติดตามเมื่อครบ 1 สัปดาห์" },
+          { step: 4, text: "สัปดาห์ที่ 3: หาก R ปกติ พิจารณาเริ่ม Pyrazinamide (Z) (ถ้าจำเป็น) และเจาะ LFT ติดตาม" },
+          { step: 5, text: "หากเกิดเอนไซม์ตับสูงขึ้นเกินเกณฑ์ระหว่างตัวใด ให้หยุดยาตัวนั้นทันทีและถือว่าแพ้/เกิดพิษจากยาตัวนั้น" }
+        ];
+
+        // Helper for Timeline Stats
+        const getPatientTimelineStats = (patient) => {
+          const regMonths = patient.extendedPhase ? patient.regimenMonths + patient.extendedMonths : patient.regimenMonths;
+          const currentM = Math.min(patient.monthOfTreatment, regMonths);
+          const percent = Math.min(Math.round((currentM / regMonths) * 100), 100);
+          
+          let cheerMessage = "";
+          let cheerBadge = "";
+
+          if (percent < 35) {
+            cheerMessage = "จุดเริ่มต้นที่ยิ่งใหญ่! การทานยาอย่างเคร่งครัดใน 2 เดือนแรก คือหัวใจสำคัญที่สุดในการกำจัดเชื้อวัณโรค สู้ๆ ครับ!";
+            cheerBadge = "🌱 เริ่มต้นการรักษาอย่างเข้มแข็ง";
+          } else if (percent < 70) {
+            cheerMessage = "เยี่ยมมากครับ! คุณผ่านช่วงระยะเข้มข้นมาแล้ว ร่างกายกำลังฟื้นตัวได้ดี ทานยาต่อเนื่องตามแพทย์สั่งต่อไปนะครับ!";
+            cheerBadge = "🏃‍♂️ ก้าวเข้าสู่ระยะสมาน ร่างกายดีขึ้นต่อเนื่อง";
+          } else if (percent < 100) {
+            cheerMessage = `คุณเดินทางมาถึง ${percent}% แล้ว! อีกเพียงไม่กี่เดือนก็จะหายขาดจากวัณโรคได้อย่างสมบูรณ์แบบแล้วครับ!`;
+            cheerBadge = "🔥 อีกนิดเดียวจะถึงเป้าหมายวันหายขาด!";
+          } else {
+            cheerMessage = "🎉 ยินดีด้วยอย่างยิ่ง! คุณรับประทานยาครบถ้วนตามแผนการรักษาและหายขาดจากวัณโรคแล้ว!";
+            cheerBadge = "🏆 พิชิตวัณโรคสำเร็จ! หายขาด 100%";
+          }
+
+          return { regMonths, currentM, percent, cheerMessage, cheerBadge };
+        };
+
+        // Initial Patients Mock Database
+        const initialPatients = [
+          {
+            id: "TB-69-001",
+            hn: "450004413",
+            name: "น.ส.โสภา หนูโม",
+            age: 42,
+            gender: "หญิง",
+            weight: 38.6,
+            height: 152,
+            bmi: 16.7,
+            patientType: "Drug Reaction / Allergy",
+            hivStatus: "Negative",
+            diagnosis: "Pulmonary TB, Post-DILI (Re-challenge Phase)",
+            regimenId: "ADR_HEPATIC_2HEP",
+            regimenName: "2HRE / 7HR (ตับอักเสบ งด Z)",
+            regimenMonths: 9,
+            monthOfTreatment: 2,
+            sputumStatus: "Negative",
+            extendedPhase: false,
+            extendedMonths: 0,
+            adrRecords: [
+              { date: "2026-10-01", drug: "Pyrazinamide (Z)", reaction: "Drug-Induced Liver Injury (DILI)", severity: "Severe", action: "Off Z Permanent, Hold H/R until LFT normal" },
+              { date: "2026-10-15", drug: "Isoniazid (H)", reaction: "Peripheral Numbness (ชาปลายมือเท้า)", severity: "Mild", action: "เพิ่ม Pyridoxine เป็น 50 mg/day" }
+            ],
+            soapNotes: [
+              { date: "2026-10-26", problem: "Post-DILI Re-challenge", subjective: "ผู้ป่วยไม่มีอาการคลื่นไส้อาเจียน ตาไม่เหลือง", objective: "AST 32 U/L, ALT 28 U/L (Normal)", assessment: "เอนไซม์ตับกลับสู่ปกติ พร้อม Re-challenge H", plan: "เริ่ม Isoniazid 300 mg/day นัดติดตาม LFT ใน 1 สัปดาห์" }
+            ],
+            multidisciplinaryNotes: [
+              { date: "2026-10-26", sender: "ภก.วิชัย (เภสัชกร)", text: "ผล LFT กลับสู่ปกติแล้ว ให้เริ่ม Re-challenge H เป็นตัวแรก สัปดาห์ถัดไปนัดดู LFT อีกครั้ง" }
+            ],
+            alerts: [{ id: "ALT-01", type: "Warning", text: "อยู่ระหว่าง Re-challenge ยา หลังเกิด DILI (เอนไซม์ตับเคยสูง 210 U/L)" }]
+          },
+          {
+            id: "TB-69-002",
+            hn: "450003053",
+            name: "นายภาณุพงศ์ แก้วเจริญ",
+            age: 58,
+            gender: "ชาย",
+            weight: 58.9,
+            height: 168,
+            bmi: 20.9,
+            patientType: "MDR/RR-TB",
+            hivStatus: "Negative",
+            diagnosis: "Pulmonary MDR-TB (Resistant to H & R)",
+            regimenId: "MDR_SHORTER_ALL_ORAL",
+            regimenName: "Shorter All-Oral Bdq Regimen (9-11 เดือน)",
+            regimenMonths: 11,
+            monthOfTreatment: 5,
+            sputumStatus: "Negative",
+            extendedPhase: false,
+            extendedMonths: 0,
+            adrRecords: [],
+            soapNotes: [],
+            multidisciplinaryNotes: [],
+            alerts: [{ id: "ALT-02", type: "Info", text: "สูตรยา MDR-TB สั้น 9-11 เดือน (Bdq-based) ติดตาม EKG (QTc interval) ทุกเดือน" }]
+          }
+        ];
+
+        // MAIN APP COMPONENT
+        function App() {
+          const [patients, setPatients] = useState(initialPatients);
+          const [selectedPatientId, setSelectedPatientId] = useState(initialPatients[0].id);
+          const [activeTab, setActiveTab] = useState('registry'); // registry, calculator, rechallenge
+          const [searchTerm, setSearchTerm] = useState('');
+          const [weightFilter, setWeightFilter] = useState('all');
+          const [patientTypeFilter, setPatientTypeFilter] = useState('all');
+          const [showCheerUpModal, setShowCheerUpModal] = useState(false);
+          const [showNewPatientModal, setShowNewPatientModal] = useState(false);
+          const [newNoteText, setNewNoteText] = useState('');
+
+          // ADR Form State
+          const [adrForm, setAdrForm] = useState({ drug: '', reaction: '', severity: 'Moderate', action: '' });
+          const [showAdrModal, setShowAdrModal] = useState(false);
+
+          // SOAP Form State
+          const [soapForm, setSoapForm] = useState({ problem: '', subjective: '', objective: '', assessment: '', plan: '' });
+          const [showSoapModal, setShowSoapModal] = useState(false);
+
+          const [newPatientForm, setNewPatientForm] = useState({
+            hn: '', name: '', age: '', gender: 'ชาย', weight: '', height: '',
+            patientType: 'New Case (DS-TB)', diagnosis: 'Pulmonary TB, Smear Positive',
+            regimenId: 'STD_2HRZE_4HR_STD', sputumStatus: 'Positive'
+          });
+
+          const selectedPatient = useMemo(() => {
+            return patients.find(p => p.id === selectedPatientId) || patients[0];
+          }, [patients, selectedPatientId]);
+
+          const filteredPatients = useMemo(() => {
+            return patients.filter(p => {
+              const matchSearch = p.name.includes(searchTerm) || p.hn.includes(searchTerm) || p.id.includes(searchTerm);
+              const matchWeight = weightFilter === 'all' ? true : weightFilter === 'low' ? p.weight < 50 : p.weight >= 50;
+              const matchType = patientTypeFilter === 'all' ? true : p.patientType === patientTypeFilter;
+              return matchSearch && matchWeight && matchType;
+            });
+          }, [patients, searchTerm, weightFilter, patientTypeFilter]);
+
+          const handleToggleSputumStatus = (patientId) => {
+            setPatients(prev => prev.map(p => {
+              if (p.id === patientId) {
+                const isPos = p.sputumStatus === 'Positive';
+                return {
+                  ...p,
+                  sputumStatus: isPos ? 'Negative' : 'Positive',
+                  extendedPhase: !isPos,
+                  extendedMonths: !isPos ? 2 : 0,
+                  alerts: !isPos 
+                    ? [...p.alerts, { id: Date.now().toString(), type: 'Critical', text: '🚨 Sputum AFB (+) ในเดือนที่ 2/5 ขยายเวลาทานยาอีก 2 เดือน' }]
+                    : p.alerts.filter(a => !a.text.includes('Sputum AFB (+)'))
+                };
+              }
+              return p;
+            }));
+          };
+
+          const handleAddNote = () => {
+            if (!newNoteText.trim()) return;
+            const noteObj = {
+              date: new Date().toISOString().split('T')[0],
+              sender: "ภก.คลินิก (เภสัชกร)",
+              text: newNoteText
+            };
+            setPatients(prev => prev.map(p => p.id === selectedPatientId ? { ...p, multidisciplinaryNotes: [noteObj, ...p.multidisciplinaryNotes] } : p));
+            setNewNoteText('');
+          };
+
+          const handleAddAdr = (e) => {
+            e.preventDefault();
+            const record = {
+              date: new Date().toISOString().split('T')[0],
+              ...adrForm
+            };
+            setPatients(prev => prev.map(p => p.id === selectedPatientId ? {
+              ...p,
+              adrRecords: [record, ...(p.adrRecords || [])]
+            } : p));
+            setAdrForm({ drug: '', reaction: '', severity: 'Moderate', action: '' });
+            setShowAdrModal(false);
+          };
+
+          const handleAddSoap = (e) => {
+            e.preventDefault();
+            const record = {
+              date: new Date().toISOString().split('T')[0],
+              ...soapForm
+            };
+            setPatients(prev => prev.map(p => p.id === selectedPatientId ? {
+              ...p,
+              soapNotes: [record, ...(p.soapNotes || [])]
+            } : p));
+            setSoapForm({ problem: '', subjective: '', objective: '', assessment: '', plan: '' });
+            setShowSoapModal(false);
+          };
+
+          const handleCreatePatient = (e) => {
+            e.preventDefault();
+            const selectedReg = CPG_REGIMENS.find(r => r.id === newPatientForm.regimenId) || CPG_REGIMENS[0];
+            const bw = parseFloat(newPatientForm.weight) || 50;
+            const ht = parseFloat(newPatientForm.height) || 160;
+            const bmiVal = ((bw / ((ht / 100) ** 2))).toFixed(1);
+
+            const newEntry = {
+              id: `TB-69-00${patients.length + 1}`,
+              hn: newPatientForm.hn || `${Math.floor(100000000 + Math.random() * 900000000)}`,
+              name: newPatientForm.name || "ผู้ป่วย รายใหม่",
+              age: parseInt(newPatientForm.age) || 45,
+              gender: newPatientForm.gender,
+              weight: bw,
+              height: ht,
+              bmi: parseFloat(bmiVal),
+              patientType: newPatientForm.patientType,
+              hivStatus: "Negative",
+              diagnosis: newPatientForm.diagnosis,
+              regimenId: selectedReg.id,
+              regimenName: selectedReg.name,
+              regimenMonths: selectedReg.durationMonths,
+              monthOfTreatment: 1,
+              sputumStatus: newPatientForm.sputumStatus,
+              extendedPhase: false,
+              extendedMonths: 0,
+              adrRecords: [],
+              soapNotes: [],
+              multidisciplinaryNotes: [],
+              alerts: bw < 50 ? [{ id: "ALT-NEW", type: "Warning", text: "น้ำหนักตัวน้อย (< 50 kg) คำนวณยาแยกเม็ด" }] : []
+            };
+
+            setPatients([newEntry, ...patients]);
+            setSelectedPatientId(newEntry.id);
+            setShowNewPatientModal(false);
+          };
+
+          return (
+            <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
+              
+              {/* TOP HEADER */}
+              <header className="bg-gradient-to-r from-teal-900 via-slate-900 to-teal-950 text-white shadow-md sticky top-0 z-30">
+                <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-teal-500 p-2.5 rounded-2xl shadow-lg border border-teal-300/30">
+                      <i className="fa-solid fa-user-doctor text-slate-950 text-xl"></i>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-lg font-black tracking-tight text-white">TB Pharmacy Care Hub</h1>
+                        <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">CPG 2021 Update</span>
+                      </div>
+                      <p className="text-xs text-teal-200/80 font-medium">ระบบดูแลผู้ป่วยวัณโรค เภสัชกรรมคลินิก และการปรับสูตรยาตาม CPG พ.ศ. 2564</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowNewPatientModal(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-teal-400 to-emerald-500 hover:from-teal-300 hover:to-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-md flex items-center gap-1.5 transition-all transform active:scale-95"
+                  >
+                    <i className="fa-solid fa-user-plus"></i> ลงทะเบียนผู้ป่วยใหม่
+                  </button>
+                </div>
+
+                {/* NAVIGATION TABS */}
+                <div className="max-w-7xl mx-auto px-4 flex gap-1 border-t border-slate-800/80 pt-1">
+                  <button
+                    onClick={() => setActiveTab('registry')}
+                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl flex items-center gap-2 transition-all ${
+                      activeTab === 'registry' ? 'bg-slate-50 text-teal-900 border-t-2 border-teal-500 shadow-sm' : 'text-slate-300 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <i className="fa-solid fa-users"></i> ทะเบียนผู้ป่วย & Timeline สเกล
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('calculator')}
+                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl flex items-center gap-2 transition-all ${
+                      activeTab === 'calculator' ? 'bg-slate-50 text-teal-900 border-t-2 border-teal-500 shadow-sm' : 'text-slate-300 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <i className="fa-solid fa-calculator"></i> คำนวณขนาดยา & สูตรยา CPG 2021
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('rechallenge')}
+                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl flex items-center gap-2 transition-all ${
+                      activeTab === 'rechallenge' ? 'bg-slate-50 text-teal-900 border-t-2 border-teal-500 shadow-sm' : 'text-slate-300 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <i className="fa-solid fa-shield-halved text-amber-400"></i> การจัดการแพ้ยา & Re-challenge
+                  </button>
+                </div>
+              </header>
+
+              {/* MAIN CONTENT */}
+              <main className="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+                {/* TAB 1: REGISTRY & TIMELINE */}
+                {activeTab === 'registry' && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left Sidebar */}
+                    <div className="lg:col-span-4 space-y-4">
+                      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                        <div className="relative">
+                          <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                          <input
+                            type="text"
+                            placeholder="ค้นหา ชื่อ, HN, หรือ รหัสผู้ป่วย..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 block mb-1">กลุ่มน้ำหนักตัว</label>
+                            <select
+                              value={weightFilter}
+                              onChange={(e) => setWeightFilter(e.target.value)}
+                              className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium"
+                            >
+                              <option value="all">ทั้งหมด</option>
+                              <option value="low">BW &lt; 50 kg (แยกเม็ด)</option>
+                              <option value="normal">BW ≥ 50 kg (มาตรฐาน)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 block mb-1">ประเภทผู้ป่วย</label>
+                            <select
+                              value={patientTypeFilter}
+                              onChange={(e) => setPatientTypeFilter(e.target.value)}
+                              className="w-full p-1.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 font-medium"
+                            >
+                              <option value="all">ทุกประเภท</option>
+                              <option value="New Case (DS-TB)">DS-TB (ไวต่อยา)</option>
+                              <option value="MDR/RR-TB">MDR/RR-TB (ดื้อยา)</option>
+                              <option value="Drug Reaction / Allergy">Drug Reaction / DILI</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Patient List */}
+                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm divide-y max-h-[550px] overflow-y-auto">
+                        {filteredPatients.length === 0 ? (
+                          <div className="p-6 text-center text-slate-400 text-xs">ไม่พบข้อมูลผู้ป่วย</div>
+                        ) : (
+                          filteredPatients.map(p => {
+                            const isLowWeight = p.weight < 50;
+                            const stats = getPatientTimelineStats(p);
+                            const isSelected = selectedPatientId === p.id;
+
+                            return (
+                              <div
+                                key={p.id}
+                                onClick={() => setSelectedPatientId(p.id)}
+                                className={`p-3.5 cursor-pointer transition-colors ${
+                                  isSelected ? 'bg-teal-50/90 border-l-4 border-teal-600' : 'hover:bg-slate-50'
+                                }`}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-black text-teal-800">{p.id}</span>
+                                      {p.patientType.includes('MDR') && (
+                                        <span className="px-1.5 py-0.2 bg-purple-100 text-purple-800 font-bold text-[9px] rounded border border-purple-300">MDR</span>
+                                      )}
+                                    </div>
+                                    <h4 className="font-bold text-slate-800 text-sm mt-0.5">{p.name}</h4>
+                                    <p className="text-xs text-slate-500">HN: {p.hn} | BW: <strong className={isLowWeight ? 'text-amber-700 font-bold' : ''}>{p.weight} kg</strong></p>
+                                  </div>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded border bg-emerald-100 text-emerald-800 border-emerald-300">
+                                    {stats.percent}% (เดือน {stats.currentM}/{stats.regMonths})
+                                  </span>
+                                </div>
+
+                                <div className="mt-2.5">
+                                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                    <div className="bg-teal-600 h-full" style={{ width: `${stats.percent}%` }} />
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right Panel Detail View */}
+                    <div className="lg:col-span-8 space-y-5">
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                        
+                        {/* 👤 PATIENT PROFILE SUMMARY HEADER */}
+                        <div className="bg-gradient-to-r from-teal-50 via-slate-50 to-emerald-50 p-4 rounded-2xl border border-teal-100 flex flex-wrap items-center justify-between gap-4">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-12 h-12 bg-teal-700 text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm">
+                              <i className="fa-solid fa-user-circle"></i>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h2 className="text-lg font-black text-slate-800">{selectedPatient.name}</h2>
+                                <span className="text-xs bg-teal-800 text-white font-mono px-2 py-0.5 rounded-md font-bold">
+                                  HN: {selectedPatient.hn}
+                                </span>
+                                <span className="text-xs bg-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded-md">
+                                  ID: {selectedPatient.id}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mt-1 font-medium">
+                                <span><i className="fa-solid fa-weight-scale text-teal-600"></i> น้ำหนัก: <strong className="text-slate-900 font-bold">{selectedPatient.weight} kg</strong> (BMI: {selectedPatient.bmi})</span>
+                                <span>•</span>
+                                <span><i className="fa-solid fa-pills text-amber-600"></i> สูตรยา: <strong className="text-teal-900 font-bold">{selectedPatient.regimenName}</strong></span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShowCheerUpModal(true)}
+                              className="px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-emerald-600 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow"
+                            >
+                              <i className="fa-solid fa-sparkles text-amber-200"></i> เปิดโหมด Cheer Up ให้กำลังใจ
+                            </button>
+                            <button
+                              onClick={() => handleToggleSputumStatus(selectedPatient.id)}
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1 border ${
+                                selectedPatient.sputumStatus === 'Positive' ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              <i className="fa-solid fa-arrows-rotate"></i> {selectedPatient.sputumStatus === 'Positive' ? 'ผล Sputum เป็น (+)' : 'ระบุผล Sputum เป็น (+)'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 📊 SCALE แสดงการกินยาของผู้ป่วย (TREATMENT SCALE ROADMAP) */}
+                        {(() => {
+                          const stats = getPatientTimelineStats(selectedPatient);
+                          return (
+                            <div className="bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md border border-slate-700 space-y-4">
+                              <div className="flex justify-between items-center border-b border-slate-700 pb-3">
+                                <div>
+                                  <span className="text-[11px] font-bold text-teal-300 uppercase tracking-widest flex items-center gap-1.5">
+                                    <i className="fa-solid fa-compass text-amber-400"></i> SCALE แสดงการกินยาของผู้ป่วย (TREATMENT PROGRESS SCALE)
+                                  </span>
+                                  <h3 className="text-base font-extrabold text-white mt-0.5">{stats.cheerBadge}</h3>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-xs text-slate-400 block">ความก้าวหน้าการกินยา</span>
+                                  <span className="text-2xl font-black text-amber-400 font-mono">{stats.percent}%</span>
+                                </div>
+                              </div>
+
+                              <div className="bg-teal-950/60 border border-teal-500/30 p-3 rounded-xl flex items-start gap-3">
+                                <i className="fa-solid fa-face-smile text-amber-400 text-xl mt-0.5"></i>
+                                <p className="text-xs text-teal-100 font-medium">"{stats.cheerMessage}"</p>
+                              </div>
+
+                              <div className="pt-4 pb-2 px-2">
+                                <div className="relative">
+                                  <div className="h-4 bg-slate-700 rounded-full w-full overflow-hidden flex">
+                                    <div className="bg-blue-600 h-full" style={{ width: `${(2 / stats.regMonths) * 100}%` }} title="ระยะเข้มข้น (Intensive Phase)" />
+                                    <div className="bg-emerald-600 h-full" style={{ width: `${((selectedPatient.regimenMonths - 2) / stats.regMonths) * 100}%` }} title="ระยะสมาน (Continuation Phase)" />
+                                    {selectedPatient.extendedPhase && (
+                                      <div className="bg-rose-600 h-full animate-pulse" style={{ width: `${(selectedPatient.extendedMonths / stats.regMonths) * 100}%` }} title="ขยายเวลาทานยา" />
+                                    )}
+                                  </div>
+                                  <div className="absolute top-0 left-0 h-4 bg-gradient-to-r from-cyan-400 to-amber-300 rounded-full opacity-90 shadow-md" style={{ width: `${stats.percent}%` }} />
+                                  
+                                  {/* Scale Marker Badge */}
+                                  <div 
+                                    className="absolute -top-3.5 transform -translate-x-1/2 transition-all duration-500 z-10 flex flex-col items-center"
+                                    style={{ left: `${stats.percent}%` }}
+                                  >
+                                    <div className="bg-amber-400 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full shadow-lg border border-white flex items-center gap-1 whitespace-nowrap">
+                                      <i className="fa-solid fa-user text-[9px]"></i> กินยาถึงเดือนที่ {stats.currentM}
+                                    </div>
+                                    <div className="w-2 h-2 bg-amber-400 rotate-45 -mt-1 shadow-md"></div>
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-between mt-5 text-[10px] text-slate-300 font-medium">
+                                  <span>เริ่มต้นรักษา (M0)</span>
+                                  <span className="text-teal-300 font-bold">จบระยะเข้มข้น (M2)</span>
+                                  <span className="text-amber-400 font-bold">เป้าหมาย M{stats.regMonths} (ทานยาครบ/หายขาด)</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Weight Status */}
+                        <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 ${
+                          selectedPatient.weight < 50 ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                        }`}>
+<!-- ... existing code -->
