@@ -287,7 +287,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
 
   // Check matching DDIs for concomitant medications
   const matchedDdis = DRUG_INTERACTIONS.filter(ddi => 
-    (selectedPatient.concomitantMeds || []).some(med => 
+    (selectedPatient?.concomitantMeds || []).some(med => 
       med.toLowerCase().includes(ddi.drug.toLowerCase().split(' ')[0].toLowerCase()) ||
       ddi.drug.toLowerCase().includes(med.toLowerCase().split(' ')[0].toLowerCase())
     )
