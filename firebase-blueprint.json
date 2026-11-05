@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Patient": {
+      "title": "Patient",
+      "description": "TB patient clinical and pharmaceutical care record at Khao Chaison Hospital",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique TB patient ID",
+          "maxLength": 64
+        },
+        "hn": {
+          "type": "string",
+          "description": "Hospital Number (HN)",
+          "maxLength": 32
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of the patient",
+          "maxLength": 200
+        },
+        "age": {
+          "type": "number",
+          "description": "Age in years"
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["ชาย", "หญิง"],
+          "description": "Gender"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Body weight in kg"
+        },
+        "height": {
+          "type": "number",
+          "description": "Height in cm"
+        },
+        "bmi": {
+          "type": "number",
+          "description": "Body Mass Index"
+        },
+        "patientType": {
+          "type": "string",
+          "description": "TB classification",
+          "maxLength": 100
+        },
+        "regimenName": {
+          "type": "string",
+          "description": "Current TB regimen",
+          "maxLength": 200
+        }
+      },
+      "required": ["id", "hn", "name", "weight"]
+    }
+  },
+  "firestore": {
+    "/patients/{patientId}": {
+      "schema": {
+        "$ref": "#/entities/Patient"
+      },
+      "description": "Collection of TB patients managed by pharmacists and nurses"
+    }
+  }
+}

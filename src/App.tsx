@@ -18,33 +18,92 @@ import {
 import { INITIAL_PATIENTS } from './data/cpgData';
 import { Patient, PatientVisit, ADRRecord, SOAPNote } from './types/tb';
 import { ParsedRequisitionRow } from './utils/excelImport';
+import { db, OperationType, handleFirestoreError } from './firebase';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  deleteDoc,
+  getDoc
+} from 'firebase/firestore';
 
-const STORAGE_KEY = 'tb_pharmacy_patients_v1';
+function cleanForFirestore<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanForFirestore(item)) as unknown as T;
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const cleaned: Record<string, unknown> = {};
+    Object.entries(obj as Record<string, unknown>).forEach(([key, value]) => {
+      if (value !== undefined) {
+        cleaned[key] = cleanForFirestore(value);
+      }
+    });
+    return cleaned as T;
+  }
+  return obj;
+}
 
 export default function App() {
-  const [patients, setPatients] = useState<Patient[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch {
-      // ignore storage errors
-    }
-    return INITIAL_PATIENTS;
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
-    } catch {
-      // ignore storage errors
-    }
-  }, [patients]);
-
-  const [selectedPatientId, setSelectedPatientId] = useState<string>(() => patients[0]?.id || '');
+  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(INITIAL_PATIENTS[0]?.id || '');
   const [activeTab, setActiveTab] = useState<'registry' | 'calculator' | 'rechallenge' | 'guidelines' | 'dashboard'>('registry');
+
+  // Real-time Firestore listener & one-time initial seed
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
+    const initFirestore = async () => {
+      try {
+        const metaRef = doc(db, 'meta', 'initialized');
+        const metaSnap = await getDoc(metaRef);
+        if (!metaSnap.exists()) {
+          for (const p of INITIAL_PATIENTS) {
+            await setDoc(doc(db, 'patients', p.id), cleanForFirestore(p));
+          }
+          await setDoc(metaRef, { seeded: true });
+        }
+      } catch (error) {
+        console.error('Error checking/seeding initial patients:', error);
+      }
+
+      unsubscribe = onSnapshot(
+        collection(db, 'patients'),
+        (snapshot) => {
+          const loaded: Patient[] = [];
+          snapshot.forEach((docSnap) => {
+            loaded.push(docSnap.data() as Patient);
+          });
+          loaded.sort((a, b) => a.id.localeCompare(b.id));
+          setPatients(loaded);
+          setSelectedPatientId((prevId) => {
+            if (loaded.length === 0) return '';
+            if (!prevId || !loaded.some((p) => p.id === prevId)) {
+              return loaded[0].id;
+            }
+            return prevId;
+          });
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.LIST, 'patients');
+        }
+      );
+    };
+
+    initFirestore();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
+  const savePatientToFirestore = async (patient: Patient) => {
+    try {
+      await setDoc(doc(db, 'patients', patient.id), cleanForFirestore(patient));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `patients/${patient.id}`);
+    }
+  };
 
   // Modal Visibility States
   // Pop-up shows on initial load before entering app as requested!
@@ -212,6 +271,7 @@ export default function App() {
     setPatients([fullPatient, ...patients]);
     setSelectedPatientId(fullPatient.id);
     setShowNewPatientModal(false);
+    savePatientToFirestore(fullPatient);
   };
 
   // Handler: Update Rechallenge Status
@@ -374,7 +434,7 @@ export default function App() {
   };
 
   // Handler: Update Patient Basic Info (Name, HN, Age, Gender, Weight, Phone)
-  const handleUpdatePatientInfo = (
+  const handleUpdatePatientInfo = async (
     patientId: string,
     updatedData: {
       name: string;
@@ -385,25 +445,29 @@ export default function App() {
       phoneNumber?: string;
     }
   ) => {
-    setPatients(prev => prev.map(p => {
-      if (p.id === patientId) {
-        const newBmi = p.height > 0 ? parseFloat((updatedData.weight / Math.pow(p.height / 100, 2)).toFixed(1)) : p.bmi;
-        return {
-          ...p,
-          ...updatedData,
-          bmi: newBmi
-        };
-      }
-      return p;
-    }));
+    const target = patients.find(p => p.id === patientId);
+    if (!target) return;
+    const newBmi = target.height > 0 ? parseFloat((updatedData.weight / Math.pow(target.height / 100, 2)).toFixed(1)) : target.bmi;
+    const updatedPatient: Patient = {
+      ...target,
+      ...updatedData,
+      bmi: newBmi
+    };
+    setPatients(prev => prev.map(p => (p.id === patientId ? updatedPatient : p)));
+    await savePatientToFirestore(updatedPatient);
   };
 
   // Handler: Delete / Discharge (D/C) Patient
-  const handleDeletePatient = (patientId: string) => {
+  const handleDeletePatient = async (patientId: string) => {
     const remaining = patients.filter(p => p.id !== patientId);
     setPatients(remaining);
     if (selectedPatientId === patientId) {
       setSelectedPatientId(remaining.length > 0 ? remaining[0].id : '');
+    }
+    try {
+      await deleteDoc(doc(db, 'patients', patientId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `patients/${patientId}`);
     }
   };
 

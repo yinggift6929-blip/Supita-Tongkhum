@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidPatient(data) {
+      return data.keys().hasAll(['id', 'hn', 'name', 'weight'])
+        && data.id is string && data.id.size() > 0 && data.id.size() <= 64
+        && data.hn is string && data.hn.size() > 0 && data.hn.size() <= 32
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.weight is number && data.weight > 0 && data.weight <= 300;
+    }
+
+    match /patients/{patientId} {
+      allow get: if isValidId(patientId);
+      allow list: if true;
+      allow create: if isValidId(patientId) && isValidPatient(incoming());
+      allow update: if isValidId(patientId) && isValidPatient(incoming());
+      allow delete: if isValidId(patientId);
+    }
+
+    match /meta/{docId} {
+      allow get: if isValidId(docId);
+      allow create, update: if isValidId(docId);
+    }
+  }
+}
