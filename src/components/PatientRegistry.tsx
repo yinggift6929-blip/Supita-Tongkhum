@@ -223,11 +223,14 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
       const bcoText = bco !== '0' ? ` + Vit B co ${bco}` : '';
       return `4FDC (Rimstar) ${fdc} เม็ด OD ac${bcoText}`;
     }
-    const rMg = selectedPatient.weight < 50 ? `${r * 450}mg` : `${r * 300}mg`;
-    const zText = z > 0 ? `, Z(${z * 500}mg) ${z} เม็ด` : '';
-    const eText = e > 0 ? `, E(${e * 400}mg) ${e} เม็ด` : '';
-    const bcoText = bco !== '0' ? `, Vit B co ${bco}` : '';
-    return `H(${h * 100}mg) ${h} เม็ด, R(${rMg}) ${r} แคปซูล${zText}${eText}${bcoText}`;
+    const rMg = (selectedPatient?.weight ?? 50) < 50 ? `${r * 450}mg` : `${r * 300}mg`;
+    const parts: string[] = [];
+    if (h > 0) parts.push(`H(${h * 100}mg) ${h} เม็ด`);
+    if (r > 0) parts.push(`R(${rMg}) ${r} แคปซูล`);
+    if (z > 0) parts.push(`Z(${z * 500}mg) ${z} เม็ด`);
+    if (e > 0) parts.push(`E(${e * 400}mg) ${e} เม็ด`);
+    if (bco !== '0') parts.push(`Vit B co ${bco}`);
+    return parts.length > 0 ? parts.join(', ') : 'งดยาทุกตัวชั่วคราว';
   };
 
   const handleSaveRegimen = (
@@ -1046,13 +1049,15 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-teal-800 text-white font-black text-xs flex items-center justify-center">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        hTabs > 0 ? 'bg-teal-800 text-white' : 'bg-slate-400 text-white'
+                      }`}>
                         H
                       </span>
                       <div>
                         <span className="font-bold text-slate-900 text-xs">Isoniazid (INH 100 mg / เม็ด)</span>
-                        <span className="text-[11px] text-teal-900 font-bold ml-2">
-                          ทานวันละ {hTabs} เม็ด ({hTabs * 100} mg) ก่อนนอน
+                        <span className={`text-[11px] font-bold ml-2 ${hTabs > 0 ? 'text-teal-900' : 'text-slate-500'}`}>
+                          {hTabs === 0 ? 'งดยา (ไม่ได้ใช้)' : `ทานวันละ ${hTabs} เม็ด (${hTabs * 100} mg) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
@@ -1061,7 +1066,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[11px] font-bold text-slate-600 mr-1">เลือกจำนวนเม็ด:</span>
-                    {[1, 1.5, 2, 2.5, 3, 3.5, 4].map(val => (
+                    {[0, 1, 1.5, 2, 2.5, 3, 3.5, 4].map(val => (
                       <button
                         key={val}
                         type="button"
@@ -1071,11 +1076,13 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           hTabs === val
-                            ? 'bg-teal-700 text-white border-teal-700 shadow-sm ring-2 ring-teal-400/40'
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-teal-700 text-white border-teal-700 shadow-sm ring-2 ring-teal-400/40'
                             : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
                         }`}
                       >
-                        {val} เม็ด
+                        {val === 0 ? '0 (งด)' : `${val} เม็ด`}
                       </button>
                     ))}
                   </div>
@@ -1085,15 +1092,19 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-red-700 text-white font-black text-xs flex items-center justify-center">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        rTabs > 0 ? 'bg-red-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
                         R
                       </span>
                       <div>
                         <span className="font-bold text-slate-900 text-xs">
                           Rifampicin ({selectedPatient.weight < 50 ? 'แคปซูล 450 mg' : 'แคปซูล 300 mg'})
                         </span>
-                        <span className="text-[11px] text-red-900 font-bold ml-2">
-                          ทานวันละ {rTabs} แคปซูล ({selectedPatient.weight < 50 ? `${rTabs * 450} mg` : `${rTabs * 300} mg`}) ก่อนนอน
+                        <span className={`text-[11px] font-bold ml-2 ${rTabs > 0 ? 'text-red-900' : 'text-slate-500'}`}>
+                          {rTabs === 0
+                            ? 'งดยา (ไม่ได้ใช้)'
+                            : `ทานวันละ ${rTabs} แคปซูล (${selectedPatient.weight < 50 ? `${rTabs * 450} mg` : `${rTabs * 300} mg`}) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
@@ -1102,7 +1113,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
 
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[11px] font-bold text-slate-600 mr-1">เลือกจำนวนแคปซูล:</span>
-                    {[1, 1.5, 2, 2.5].map(val => (
+                    {[0, 1, 1.5, 2, 2.5].map(val => (
                       <button
                         key={val}
                         type="button"
@@ -1112,11 +1123,13 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           rTabs === val
-                            ? 'bg-red-700 text-white border-red-700 shadow-sm ring-2 ring-red-400/40'
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-red-700 text-white border-red-700 shadow-sm ring-2 ring-red-400/40'
                             : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
                         }`}
                       >
-                        {val} แคปซูล
+                        {val === 0 ? '0 (งด)' : `${val} แคปซูล`}
                       </button>
                     ))}
                   </div>
@@ -1126,12 +1139,14 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-amber-700 text-white font-black text-xs flex items-center justify-center">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        zTabs > 0 ? 'bg-amber-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
                         Z
                       </span>
                       <div>
                         <span className="font-bold text-slate-900 text-xs">Pyrazinamide (PZA 500 mg / เม็ด)</span>
-                        <span className="text-[11px] text-amber-900 font-bold ml-2">
+                        <span className={`text-[11px] font-bold ml-2 ${zTabs > 0 ? 'text-amber-900' : 'text-slate-500'}`}>
                           {zTabs === 0 ? 'งดยา (Off Z / เข้า Continuation Phase)' : `ทานวันละ ${zTabs} เม็ด (${zTabs * 500} mg) ก่อนนอน`}
                         </span>
                       </div>
@@ -1151,7 +1166,9 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           zTabs === val
-                            ? 'bg-amber-700 text-white border-amber-700 shadow-sm ring-2 ring-amber-400/40'
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-amber-700 text-white border-amber-700 shadow-sm ring-2 ring-amber-400/40'
                             : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
                         }`}
                       >
@@ -1165,12 +1182,14 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-blue-700 text-white font-black text-xs flex items-center justify-center">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        eTabs > 0 ? 'bg-blue-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
                         E
                       </span>
                       <div>
                         <span className="font-bold text-slate-900 text-xs">Ethambutol (EMB 400 mg / เม็ด)</span>
-                        <span className="text-[11px] text-blue-900 font-bold ml-2">
+                        <span className={`text-[11px] font-bold ml-2 ${eTabs > 0 ? 'text-blue-900' : 'text-slate-500'}`}>
                           {eTabs === 0 ? 'งดยา (Off E / เข้า Continuation Phase)' : `ทานวันละ ${eTabs} เม็ด (${eTabs * 400} mg) ก่อนนอน`}
                         </span>
                       </div>
@@ -1190,7 +1209,9 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           eTabs === val
-                            ? 'bg-blue-700 text-white border-blue-700 shadow-sm ring-2 ring-blue-400/40'
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-blue-700 text-white border-blue-700 shadow-sm ring-2 ring-blue-400/40'
                             : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
                         }`}
                       >
