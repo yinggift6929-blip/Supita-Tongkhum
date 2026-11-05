@@ -1403,58 +1403,77 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {/* Render most recent visit first */}
-                    {[...selectedPatient.visits].reverse().map((visit, idx) => {
-                      const isLowW = visit.weight < 50;
+                    {/* Filter out future visits and render chronologically (#1, #2, #3...) */}
+                    {(() => {
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const validVisits = selectedPatient.visits
+                        .filter(v => !v.visitDate || v.visitDate <= todayStr)
+                        .sort((a, b) => (a.visitDate || '').localeCompare(b.visitDate || ''));
 
-                      return (
-                        <div
-                          key={visit.id || idx}
-                          className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all space-y-3"
-                        >
-                          <div className="flex flex-wrap justify-between items-start gap-2 border-b border-slate-200/80 pb-2.5">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="w-6 h-6 rounded-lg bg-teal-800 text-white font-black text-xs flex items-center justify-center">
-                                #{selectedPatient.visits.length - idx}
-                              </span>
-                              <span className="font-extrabold text-xs text-slate-900 flex items-center gap-1 font-mono">
-                                <Calendar className="w-3.5 h-3.5 text-teal-700" />
-                                <span>วันที่มารับยา: {visit.visitDate}</span>
-                              </span>
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                visit.dispenseStatus === 'Dispensed' || visit.dispenseStatus === 'Verified'
-                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                  : 'bg-amber-100 text-amber-900 border border-amber-300'
-                              }`}>
-                                {visit.dispenseStatus === 'Dispensed' ? 'จ่ายยาแล้ว (Dispensed)' : visit.dispenseStatus === 'Verified' ? 'ตรวจสอบแล้ว' : 'รอจ่ายยา (Pending)'}
-                              </span>
-
-                              {/* Medication Adherence Badge (User Request #3) */}
-                              {visit.medicationTakingStatus === 'incorrect' ? (
-                                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300 flex items-center gap-1 shadow-xs">
-                                  <span>⚠️ กินยาไม่ถูกต้อง:</span>
-                                  <span className="font-semibold">{visit.incorrectReason || 'มีลืมทานยา'}</span>
-                                  {visit.missedDosesCount ? <span className="font-bold underline text-rose-950">({visit.missedDosesCount} มื้อ)</span> : null}
-                                </span>
-                              ) : (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-emerald-600" />
-                                  <span>กินยาถูกต้องครบถ้วน</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="text-right text-xs">
-                              {visit.nextAppointmentDate ? (
-                                <span className="flex items-center gap-1 font-bold text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                                  <span>วันนัดครั้งต่อไป:</span>
-                                  <span className="font-mono text-teal-950 font-black">{visit.nextAppointmentDate}</span>
-                                </span>
-                              ) : (
-                                <span className="text-slate-400">ไม่ได้ระบุวันนัด</span>
-                              )}
-                            </div>
+                      if (validVisits.length === 0) {
+                        return (
+                          <div className="p-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-xs text-slate-500">
+                            ยังไม่มีประวัติการรับยาที่ผ่านมา (กดปุ่ม "+ บันทึกรับยา Visit ใหม่" เพื่อเริ่มบันทึก)
                           </div>
+                        );
+                      }
+
+                      return validVisits.map((visit, idx) => {
+                        const isLowW = visit.weight < 50;
+
+                        return (
+                          <div
+                            key={visit.id || idx}
+                            className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:shadow-md transition-all space-y-3"
+                          >
+                            <div className="flex flex-wrap justify-between items-start gap-2 border-b border-slate-200/80 pb-2.5">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="w-6 h-6 rounded-lg bg-teal-800 text-white font-black text-xs flex items-center justify-center">
+                                  #{idx + 1}
+                                </span>
+                                <span className="font-extrabold text-xs text-slate-900 flex items-center gap-1 font-mono">
+                                  <Calendar className="w-3.5 h-3.5 text-teal-700" />
+                                  <span>วันที่มารับยา: {visit.visitDate}</span>
+                                </span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  visit.dispenseStatus === 'Dispensed' || visit.dispenseStatus === 'Verified'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : 'bg-amber-100 text-amber-900 border border-amber-300'
+                                }`}>
+                                  {visit.dispenseStatus === 'Dispensed' ? 'จ่ายยาแล้ว (Dispensed)' : visit.dispenseStatus === 'Verified' ? 'ตรวจสอบแล้ว' : 'รอจ่ายยา (Pending)'}
+                                </span>
+
+                                {/* Medication Adherence Badge */}
+                                {visit.medicationTakingStatus === 'incorrect' ? (
+                                  <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300 flex items-center gap-1 shadow-xs">
+                                    <span>⚠️ กินยาไม่ถูกต้อง:</span>
+                                    <span className="font-semibold">{visit.incorrectReason || 'มีลืมทานยา'}</span>
+                                    {visit.missedDosesCount ? <span className="font-bold underline text-rose-950">({visit.missedDosesCount} มื้อ)</span> : null}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <span>กินยาถูกต้องครบถ้วน</span>
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="text-right text-xs flex flex-col items-end gap-1">
+                                {visit.nextAppointmentDate ? (
+                                  <span className="flex items-center gap-1 font-bold text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                                    <span>วันนัดครั้งต่อไป:</span>
+                                    <span className="font-mono text-teal-950 font-black">{visit.nextAppointmentDate}</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400">ไม่ได้ระบุวันนัด</span>
+                                )}
+                                {visit.notes && (
+                                  <span className="text-[11px] text-teal-800 font-medium">
+                                    นัดหมาย: {visit.notes}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
 
                           {/* Grid with Visit Key Metrics: Weight, Regimen, Days of Supply */}
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
@@ -1519,7 +1538,8 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                           </div>
                         </div>
                       );
-                    })}
+                    });
+                    })()}
                   </div>
                 )}
               </div>
