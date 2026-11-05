@@ -41,8 +41,8 @@ export const AddVisitModal: React.FC<AddVisitModalProps> = ({
       return `H(100mg) ${hTotal} เม็ด, R ${rTotal} แคปซูล, Z(500mg) ${zTotal} เม็ด, E(400mg) ${eTotal} เม็ด, Vit B co ${bcoTotal} เม็ด (ทาน 1*3 pc)`;
     }
     return weight < 50
-      ? `H(300mg) ${daysOfSupply * 3} เม็ด, R(450mg) ${daysOfSupply} แคปซูล, E(600mg) ${daysOfSupply * 2} เม็ด, Vit B co ${daysOfSupply * 3} เม็ด (ทาน 1*3 pc)`
-      : `4FDC (Rimstar) ${daysOfSupply * 3} เม็ด (ทานวันละ 3 เม็ด), Vit B co ${daysOfSupply * 3} เม็ด (ทาน 1*3 pc)`;
+      ? `H(100mg) ${daysOfSupply * 3} เม็ด, R(450mg) ${daysOfSupply} แคปซูล, Z(500mg) ${daysOfSupply * 2} เม็ด, E(400mg) ${daysOfSupply * 2} เม็ด, Vit B co ${daysOfSupply * 3} เม็ด (ทาน 1*3 pc)`
+      : `H(100mg) ${daysOfSupply * 3} เม็ด, R(300mg) ${daysOfSupply * 2} แคปซูล, Z(500mg) ${daysOfSupply * 3} เม็ด, E(400mg) ${daysOfSupply * 3} เม็ด, Vit B co ${daysOfSupply * 3} เม็ด (ทาน 1*3 pc)`;
   });
   
   // Default next appointment date based on daysOfSupply (e.g., today + 7 days)
@@ -80,8 +80,8 @@ export const AddVisitModal: React.FC<AddVisitModalProps> = ({
     } else {
       setItemsText(
         weight < 50
-          ? `H(300mg) ${days * 3} เม็ด, R(450mg) ${days} แคปซูล, E(600mg) ${days * 2} เม็ด, Vit B co ${days * 3} เม็ด (ทาน 1*3 pc)`
-          : `4FDC (Rimstar) ${days * 3} เม็ด (ทานวันละ 3 เม็ด), Vit B co ${days * 3} เม็ด (ทาน 1*3 pc)`
+          ? `H(100mg) ${days * 3} เม็ด, R(450mg) ${days} แคปซูล, Z(500mg) ${days * 2} เม็ด, E(400mg) ${days * 2} เม็ด, Vit B co ${days * 3} เม็ด (ทาน 1*3 pc)`
+          : `H(100mg) ${days * 3} เม็ด, R(300mg) ${days * 2} แคปซูล, Z(500mg) ${days * 3} เม็ด, E(400mg) ${days * 3} เม็ด, Vit B co ${days * 3} เม็ด (ทาน 1*3 pc)`
       );
     }
   };
@@ -343,21 +343,37 @@ export const AddVisitModal: React.FC<AddVisitModalProps> = ({
             )}
           </div>
 
-          {/* NEXT APPOINTMENT DATE */}
-          <div className="p-3.5 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-200 space-y-1.5">
-            <label className="font-extrabold text-teal-950 flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-teal-700" />
-              <span>วันนัดติดตามครั้งต่อไป (Next Appointment Date)</span>
-            </label>
-            <input
-              type="date"
-              value={nextAppointmentDate}
-              onChange={(e) => setNextAppointmentDate(e.target.value)}
-              className="w-full p-2 bg-white border border-teal-300 rounded-xl font-bold text-slate-800"
-              required
-            />
+          {/* NEXT APPOINTMENT DATE & APPOINTMENT NOTE */}
+          <div className="p-3.5 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-2xl border border-teal-200 space-y-2.5">
+            <div>
+              <label className="font-extrabold text-teal-950 flex items-center gap-1.5 mb-1">
+                <Calendar className="w-4 h-4 text-teal-700" />
+                <span>วันนัดติดตามครั้งต่อไป (Next Appointment Date)</span>
+              </label>
+              <input
+                type="date"
+                value={nextAppointmentDate}
+                onChange={(e) => setNextAppointmentDate(e.target.value)}
+                className="w-full p-2 bg-white border border-teal-300 rounded-xl font-bold text-slate-800"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="font-bold text-teal-900 block mb-1 text-xs">
+                บันทึกนัดหมาย (เช่น นัดเจาะ LFT, ตรวจเสมหะ, รับยาต่อเนื่อง)
+              </label>
+              <input
+                type="text"
+                placeholder="ระบุรายละเอียดการนัดหมาย..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full p-2 bg-white border border-teal-200 rounded-xl font-medium text-slate-800 text-xs"
+              />
+            </div>
+
             <span className="text-[10px] text-teal-800 block">
-              * ข้อมูลนี้จะปรากฏใน Pop-up แจ้งเตือนวันนัดของระบบอัตโนมัติ
+              * ข้อมูลวันนัดและบันทึกนัดหมายจะปรากฏใน Pop-up แจ้งเตือนวันนัดของระบบอัตโนมัติ
             </span>
           </div>
 

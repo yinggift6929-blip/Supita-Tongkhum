@@ -25,14 +25,14 @@ export function calculateFirstLineDoses(weight: number, crcl?: number): Calculat
   // H: 4-6 mg/kg (standard 5 mg/kg, max 300)
   const hMg = Math.min(Math.round(weight * 5), 300);
   const hRecommended = 300; // In adults, standard is 300 mg/day
-  const hTablets = "INH (100 mg): 3 เม็ด วันละ 1 ครั้ง ตอนเช้าก่อนอาหาร";
+  const hTablets = "INH (100 mg): 3 เม็ด วันละ 1 ครั้ง ก่อนนอน";
 
   // R: 8-12 mg/kg (standard 10 mg/kg, max 600)
   const rMg = Math.min(Math.round(weight * 10), 600);
   const rRecommended = isLowWeight ? 450 : 600;
   const rTablets = isLowWeight 
-    ? "Rifampicin (450 mg): 1 แคปซูล วันละ 1 ครั้ง ก่อนอาหาร (หรือ 300 mg 1.5 แคปซูล)"
-    : "Rifampicin (300 mg): 2 แคปซูล (600 mg) วันละ 1 ครั้ง ก่อนอาหาร";
+    ? "Rifampicin (450 mg): 1 แคปซูล วันละ 1 ครั้ง ก่อนนอน (หรือ 300 mg 1.5 แคปซูล)"
+    : "Rifampicin (300 mg): 2 แคปซูล (600 mg) วันละ 1 ครั้ง ก่อนนอน";
 
   // Z: 20-30 mg/kg (standard 25 mg/kg, max 2000)
   const zMg = Math.min(Math.round(weight * 25), 2000);
@@ -40,16 +40,16 @@ export function calculateFirstLineDoses(weight: number, crcl?: number): Calculat
   let zTablets: string;
   if (weight < 40) {
     zRecommended = 750;
-    zTablets = "PZA (500 mg): 1 เม็ดครึ่ง (750 mg) วันละ 1 ครั้ง หลังอาหาร";
+    zTablets = "PZA (500 mg): 1 เม็ดครึ่ง (750 mg) วันละ 1 ครั้ง ก่อนนอน";
   } else if (weight < 50) {
     zRecommended = 1000;
-    zTablets = "PZA (500 mg): 2 เม็ด (1,000 mg) วันละ 1 ครั้ง หลังอาหาร";
+    zTablets = "PZA (500 mg): 2 เม็ด (1,000 mg) วันละ 1 ครั้ง ก่อนนอน";
   } else if (weight <= 70) {
     zRecommended = 1500;
-    zTablets = "PZA (500 mg): 3 เม็ด (1,500 mg) วันละ 1 ครั้ง หลังอาหาร";
+    zTablets = "PZA (500 mg): 3 เม็ด (1,500 mg) วันละ 1 ครั้ง ก่อนนอน";
   } else {
     zRecommended = 2000;
-    zTablets = "PZA (500 mg): 4 เม็ด (2,000 mg) วันละ 1 ครั้ง หลังอาหาร";
+    zTablets = "PZA (500 mg): 4 เม็ด (2,000 mg) วันละ 1 ครั้ง ก่อนนอน";
   }
 
   // E: 15-20 mg/kg (standard 15 mg/kg, max 1600)
@@ -58,16 +58,16 @@ export function calculateFirstLineDoses(weight: number, crcl?: number): Calculat
   let eTablets: string;
   if (weight < 40) {
     eRecommended = 600;
-    eTablets = "EMB (400 mg): 1 เม็ดครึ่ง (600 mg) วันละ 1 ครั้ง หลังอาหาร";
+    eTablets = "EMB (400 mg): 1 เม็ดครึ่ง (600 mg) วันละ 1 ครั้ง ก่อนนอน";
   } else if (weight < 50) {
     eRecommended = 800;
-    eTablets = "EMB (400 mg): 2 เม็ด (800 mg) วันละ 1 ครั้ง หลังอาหาร";
+    eTablets = "EMB (400 mg): 2 เม็ด (800 mg) วันละ 1 ครั้ง ก่อนนอน";
   } else if (weight <= 70) {
     eRecommended = 1000; // or 1200
-    eTablets = "EMB (400 mg): 2.5 - 3 เม็ด (1,000 - 1,200 mg) หรือ EMB (500 mg) 2 เม็ด หลังอาหาร";
+    eTablets = "EMB (400 mg): 2.5 - 3 เม็ด (1,000 - 1,200 mg) หรือ EMB (500 mg) 2 เม็ด ก่อนนอน";
   } else {
     eRecommended = 1600;
-    eTablets = "EMB (400 mg): 4 เม็ด (1,600 mg) วันละ 1 ครั้ง หลังอาหาร";
+    eTablets = "EMB (400 mg): 4 เม็ด (1,600 mg) วันละ 1 ครั้ง ก่อนนอน";
   }
 
   const result: CalculatedDose[] = [
