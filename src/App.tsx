@@ -351,6 +351,42 @@ export default function App() {
     }));
   };
 
+  // Handler: Update Patient Basic Info (Name, HN, Age, Gender, Weight, Phone)
+  const handleUpdatePatientInfo = (
+    patientId: string,
+    updatedData: {
+      name: string;
+      hn: string;
+      age: number;
+      gender: 'ชาย' | 'หญิง';
+      weight: number;
+      phoneNumber?: string;
+    }
+  ) => {
+    setPatients(prev => prev.map(p => {
+      if (p.id === patientId) {
+        const newBmi = p.height > 0 ? parseFloat((updatedData.weight / Math.pow(p.height / 100, 2)).toFixed(1)) : p.bmi;
+        return {
+          ...p,
+          ...updatedData,
+          bmi: newBmi
+        };
+      }
+      return p;
+    }));
+  };
+
+  // Handler: Delete / Discharge (D/C) Patient
+  const handleDeletePatient = (patientId: string) => {
+    setPatients(prev => {
+      const remaining = prev.filter(p => p.id !== patientId);
+      if (selectedPatientId === patientId && remaining.length > 0) {
+        setSelectedPatientId(remaining[0].id);
+      }
+      return remaining;
+    });
+  };
+
   // Handler: Import Excel Weekly Requisitions
   const handleImportExcelVisits = (importedRows: ParsedRequisitionRow[]) => {
     let updatedList = [...patients];
@@ -484,6 +520,8 @@ export default function App() {
             onUpdateNextAppointment={handleUpdateNextAppointment}
             onUpdateHosxpNotes={handleSaveHosxpNotes}
             onUpdatePatientRegimen={handleUpdatePatientRegimen}
+            onUpdatePatientInfo={handleUpdatePatientInfo}
+            onDeletePatient={handleDeletePatient}
           />
         )}
 

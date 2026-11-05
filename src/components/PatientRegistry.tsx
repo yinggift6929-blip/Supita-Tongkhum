@@ -29,7 +29,9 @@ import {
   FileSpreadsheet,
   RotateCcw,
   Save,
-  Sliders
+  Sliders,
+  Trash2,
+  X
 } from 'lucide-react';
 import { Patient, PatientVisit, ADRRecord, SOAPNote, MultidisciplinaryNote, PatientCustomDoses } from '../types/tb';
 import { getPatientTimelineStats, calculateFirstLineDoses } from '../utils/tbCalculations';
@@ -50,6 +52,18 @@ interface PatientRegistryProps {
   onUpdateNextAppointment: (patientId: string, nextDate: string) => void;
   onUpdateHosxpNotes?: (patientId: string, notes: string) => void;
   onUpdatePatientRegimen?: (patientId: string, updatedRegimen: string, customDoses?: PatientCustomDoses) => void;
+  onUpdatePatientInfo?: (
+    patientId: string,
+    updatedData: {
+      name: string;
+      hn: string;
+      age: number;
+      gender: 'ชาย' | 'หญิง';
+      weight: number;
+      phoneNumber?: string;
+    }
+  ) => void;
+  onDeletePatient?: (patientId: string) => void;
 }
 
 export const PatientRegistry: React.FC<PatientRegistryProps> = ({
@@ -66,7 +80,9 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
   onMarkVisitDispensed,
   onUpdateNextAppointment,
   onUpdateHosxpNotes,
-  onUpdatePatientRegimen
+  onUpdatePatientRegimen,
+  onUpdatePatientInfo,
+  onDeletePatient
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [weightFilter, setWeightFilter] = useState<'all' | 'low' | 'normal'>('all');
@@ -84,6 +100,52 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
   const [copiedHosxp, setCopiedHosxp] = useState(false);
 
   const selectedPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
+
+  // Edit patient info & Delete/D/C state
+  const [isEditingPatientInfo, setIsEditingPatientInfo] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editHn, setEditHn] = useState('');
+  const [editAge, setEditAge] = useState<number>(45);
+  const [editGender, setEditGender] = useState<'ชาย' | 'หญิง'>('ชาย');
+  const [editWeight, setEditWeight] = useState<number>(50);
+  const [editPhone, setEditPhone] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [dcReason, setDcReason] = useState('รักษาครบหายขาด (Cured / Treatment Completed)');
+
+  const handleOpenEditPatientInfo = () => {
+    if (!selectedPatient) return;
+    setEditName(selectedPatient.name);
+    setEditHn(selectedPatient.hn);
+    setEditAge(selectedPatient.age);
+    setEditGender(selectedPatient.gender);
+    setEditWeight(selectedPatient.weight);
+    setEditPhone(selectedPatient.phoneNumber || '');
+    setIsEditingPatientInfo(true);
+  };
+
+  const handleSavePatientInfo = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatient || !editName.trim()) return;
+    if (onUpdatePatientInfo) {
+      onUpdatePatientInfo(selectedPatient.id, {
+        name: editName.trim(),
+        hn: editHn.trim() || selectedPatient.hn,
+        age: Number(editAge) || selectedPatient.age,
+        gender: editGender,
+        weight: Number(editWeight) || selectedPatient.weight,
+        phoneNumber: editPhone.trim()
+      });
+    }
+    setIsEditingPatientInfo(false);
+  };
+
+  const handleConfirmDeletePatient = () => {
+    if (!selectedPatient) return;
+    if (onDeletePatient) {
+      onDeletePatient(selectedPatient.id);
+    }
+    setShowDeleteConfirmModal(false);
+  };
 
   const handleCopyHosxp = () => {
     const textToCopy = selectedPatient.hosxpNotes || `[การบริบาลเภสัชกรรม TB - รพ.เขาชัยสน]\nHN: ${selectedPatient.hn} | ชื่อ-สกุล: ${selectedPatient.name} | น้ำหนัก: ${selectedPatient.weight} kg\nสูตรยา: ${selectedPatient.regimenName} (Month ${selectedPatient.monthOfTreatment}/${selectedPatient.regimenMonths})\nสถานะเสมหะ: AFB ${selectedPatient.sputumStatus}\nวันนัดติดตาม: ${selectedPatient.nextAppointmentDate || '-'}`;
@@ -418,6 +480,24 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-lg font-black text-slate-900">{selectedPatient.name}</h2>
+                  <button
+                    type="button"
+                    onClick={handleOpenEditPatientInfo}
+                    className="px-2 py-0.5 bg-white hover:bg-teal-50 text-teal-800 border border-teal-300 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                    title="แก้ไขชื่อหรือข้อมูลทั่วไปของผู้ป่วย"
+                  >
+                    <Edit3 className="w-3 h-3 text-teal-700" />
+                    <span>แก้ไข</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirmModal(true)}
+                    className="px-2 py-0.5 bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                    title="จำหน่ายผู้ป่วย (D/C) หรือลบรายชื่อออกจากระบบ"
+                  >
+                    <Trash2 className="w-3 h-3 text-rose-600" />
+                    <span>D/C / ลบ</span>
+                  </button>
                   <span className="text-xs bg-teal-900 text-white font-mono px-2 py-0.5 rounded-md font-bold shadow-sm">
                     HN: {selectedPatient.hn}
                   </span>
@@ -431,6 +511,113 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                     </span>
                   )}
                 </div>
+
+                {/* Inline Edit Patient Info Form */}
+                {isEditingPatientInfo && (
+                  <form
+                    onSubmit={handleSavePatientInfo}
+                    className="mt-3 p-3.5 bg-white rounded-xl border border-teal-300 shadow-md space-y-2.5 text-xs animate-in fade-in duration-150"
+                  >
+                    <div className="flex justify-between items-center border-b border-slate-100 pb-1.5">
+                      <span className="font-black text-teal-950 flex items-center gap-1.5">
+                        <Edit3 className="w-3.5 h-3.5 text-teal-700" />
+                        <span>แก้ไขข้อมูลผู้ป่วย (Edit Patient Profile)</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPatientInfo(false)}
+                        className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div className="sm:col-span-2">
+                        <label className="font-bold text-slate-700 block mb-0.5">ชื่อ-นามสกุลผู้ป่วย</label>
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-900"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-0.5">เลข HN</label>
+                        <input
+                          type="text"
+                          value={editHn}
+                          onChange={(e) => setEditHn(e.target.value)}
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-mono font-bold text-slate-900"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-0.5">อายุ (ปี)</label>
+                        <input
+                          type="number"
+                          value={editAge}
+                          onChange={(e) => setEditAge(parseInt(e.target.value) || 0)}
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-0.5">เพศ</label>
+                        <select
+                          value={editGender}
+                          onChange={(e) => setEditGender(e.target.value as 'ชาย' | 'หญิง')}
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                        >
+                          <option value="ชาย">ชาย</option>
+                          <option value="หญิง">หญิง</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-0.5">น้ำหนัก (kg)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={editWeight}
+                          onChange={(e) => setEditWeight(parseFloat(e.target.value) || 0)}
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-bold"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-0.5">เบอร์โทรศัพท์</label>
+                        <input
+                          type="text"
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          placeholder="08x-xxx-xxxx"
+                          className="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-lg font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPatientInfo(false)}
+                        className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg cursor-pointer"
+                      >
+                        ยกเลิก
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3.5 py-1 bg-teal-700 hover:bg-teal-800 text-white font-bold rounded-lg shadow-xs cursor-pointer flex items-center gap-1"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>บันทึกการแก้ไข</span>
+                      </button>
+                    </div>
+                  </form>
+                )}
 
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 mt-1.5 font-medium">
                   <span>
@@ -1769,6 +1956,71 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
           </div>
         </div>
       </div>
+
+      {/* 🗑️ CONFIRM DELETE / DISCHARGE (D/C) PATIENT MODAL */}
+      {showDeleteConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4">
+            <div className="flex justify-between items-start gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900">
+                    ยืนยันการจำหน่าย (D/C) หรือลบรายชื่อผู้ป่วย
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    ผู้ป่วย: <strong className="text-rose-900">{selectedPatient.name}</strong> (HN: {selectedPatient.hn})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirmModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl text-xs text-rose-950 space-y-2">
+              <label className="font-bold block">สาเหตุการจำหน่าย (D/C) / ลบออกจากทะเบียน:</label>
+              <select
+                value={dcReason}
+                onChange={(e) => setDcReason(e.target.value)}
+                className="w-full p-2 bg-white border border-rose-300 rounded-xl font-bold text-slate-800"
+              >
+                <option value="รักษาครบหายขาด (Cured / Treatment Completed)">รักษาครบหายขาด (Cured / Treatment Completed)</option>
+                <option value="ส่งต่อรักษาที่สถานพยาบาลอื่น (Transfer Out)">ส่งต่อรักษาที่สถานพยาบาลอื่น (Transfer Out)</option>
+                <option value="เปลี่ยนวินิจฉัย / ไม่ใช่วัณโรค (Diagnosis Changed)">เปลี่ยนวินิจฉัย / ไม่ใช่วัณโรค (Diagnosis Changed)</option>
+                <option value="ข้อมูลซ้ำซ้อน / ลบรายชื่อ">ข้อมูลซ้ำซ้อน / ลบรายชื่อ</option>
+              </select>
+              <p className="text-[11px] text-rose-800 leading-relaxed">
+                * เมื่อยืนยันแล้ว รายชื่อผู้ป่วยรายนี้จะถูกนำออกจากทะเบียนผู้ป่วยที่กำลังดูแลอยู่ (Active TB Registry)
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 text-xs">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirmModal(false)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
+              >
+                ยกเลิก
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeletePatient}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-sm cursor-pointer flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>ยืนยัน D/C / ลบรายชื่อ</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
