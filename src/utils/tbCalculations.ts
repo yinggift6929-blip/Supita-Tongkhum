@@ -169,7 +169,17 @@ export function getFdcRecommendation(weight: number): { tabs4FDC: string; tabs2F
   }
 }
 
-export function getPatientTimelineStats(patient: Patient) {
+export function getPatientTimelineStats(patient?: Patient) {
+  if (!patient) {
+    return {
+      regMonths: 6,
+      currentM: 0,
+      percent: 0,
+      cheerMessage: "",
+      cheerBadge: "",
+      stageTitle: "ระยะเข้มข้น (Intensive Phase: 2 เดือนแรก)"
+    };
+  }
   const regMonths = patient.extendedPhase ? patient.regimenMonths + patient.extendedMonths : patient.regimenMonths;
   const currentM = Math.min(patient.monthOfTreatment, regMonths);
   const percent = Math.min(Math.round((currentM / regMonths) * 100), 100);

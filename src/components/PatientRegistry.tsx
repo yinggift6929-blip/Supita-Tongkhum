@@ -185,18 +185,19 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
     };
   };
 
-  const initialDoses = getCpgDefaultDoses(selectedPatient.weight);
+  const initialDoses = getCpgDefaultDoses(selectedPatient?.weight ?? 50);
   const [dosingMode, setDosingMode] = useState<'split' | 'fdc'>('split');
-  const [hTabs, setHTabs] = useState<number>(selectedPatient.customDoses?.hTabs ?? initialDoses.hTabs);
-  const [rTabs, setRTabs] = useState<number>(selectedPatient.customDoses?.rTabs ?? initialDoses.rTabs);
-  const [zTabs, setZTabs] = useState<number>(selectedPatient.customDoses?.zTabs ?? initialDoses.zTabs);
-  const [eTabs, setETabs] = useState<number>(selectedPatient.customDoses?.eTabs ?? initialDoses.eTabs);
-  const [vitBcoSig, setVitBcoSig] = useState<string>(selectedPatient.customDoses?.vitBcoSig || '1*3 pc');
-  const [fdcTabs, setFdcTabs] = useState<number>(selectedPatient.customDoses?.fdcTabs ?? initialDoses.fdcTabs);
+  const [hTabs, setHTabs] = useState<number>(selectedPatient?.customDoses?.hTabs ?? initialDoses.hTabs);
+  const [rTabs, setRTabs] = useState<number>(selectedPatient?.customDoses?.rTabs ?? initialDoses.rTabs);
+  const [zTabs, setZTabs] = useState<number>(selectedPatient?.customDoses?.zTabs ?? initialDoses.zTabs);
+  const [eTabs, setETabs] = useState<number>(selectedPatient?.customDoses?.eTabs ?? initialDoses.eTabs);
+  const [vitBcoSig, setVitBcoSig] = useState<string>(selectedPatient?.customDoses?.vitBcoSig || '1*3 pc');
+  const [fdcTabs, setFdcTabs] = useState<number>(selectedPatient?.customDoses?.fdcTabs ?? initialDoses.fdcTabs);
   const [savedRegimenNotice, setSavedRegimenNotice] = useState<boolean>(false);
 
   // Sync state whenever selectedPatient changes
   useEffect(() => {
+    if (!selectedPatient) return;
     const d = getCpgDefaultDoses(selectedPatient.weight);
     const custom = selectedPatient.customDoses;
     setDosingMode('split');
@@ -207,7 +208,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
     setVitBcoSig(custom?.vitBcoSig || '1*3 pc');
     setFdcTabs(custom?.fdcTabs ?? d.fdcTabs);
     setSavedRegimenNotice(false);
-  }, [selectedPatient.id, selectedPatient.weight, selectedPatient.customDoses]);
+  }, [selectedPatient?.id, selectedPatient?.weight, selectedPatient?.customDoses]);
 
   const generateRegimenSummary = (
     mode: 'split' | 'fdc',
@@ -281,8 +282,8 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
   });
 
   const timelineStats = getPatientTimelineStats(selectedPatient);
-  const isLowWeight = selectedPatient.weight < 50;
-  const calculatedDoses = calculateFirstLineDoses(selectedPatient.weight);
+  const isLowWeight = (selectedPatient?.weight ?? 50) < 50;
+  const calculatedDoses = calculateFirstLineDoses(selectedPatient?.weight ?? 50);
 
   // Check matching DDIs for concomitant medications
   const matchedDdis = DRUG_INTERACTIONS.filter(ddi => 
@@ -324,6 +325,22 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
       return <span className="bg-slate-100 text-slate-700 text-[10px] font-medium px-2 py-0.5 rounded-full">อีก {diff} วัน</span>;
     }
   };
+
+  if (!selectedPatient) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-sm space-y-3">
+        <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center mx-auto">
+          <Pill className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-extrabold text-slate-900">
+          ยังไม่มีรายชื่อผู้ป่วยในระบบ
+        </h3>
+        <p className="text-xs text-slate-500 max-w-md mx-auto">
+          สามารถกดปุ่ม <strong>"นำเข้าไฟล์ Excel"</strong> หรือ <strong>"+ เพิ่มผู้ป่วยใหม่"</strong> ด้านบนเพื่อเริ่มบันทึกข้อมูลผู้ป่วยวัณโรค
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
