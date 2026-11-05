@@ -1428,8 +1428,8 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                           >
                             <div className="flex flex-wrap justify-between items-start gap-2 border-b border-slate-200/80 pb-2.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="w-6 h-6 rounded-lg bg-teal-800 text-white font-black text-xs flex items-center justify-center">
-                                  #{idx + 1}
+                                <span className="px-2.5 py-0.5 rounded-lg bg-teal-800 text-white font-black text-xs flex items-center justify-center">
+                                  Visit ที่ {idx + 1}
                                 </span>
                                 <span className="font-extrabold text-xs text-slate-900 flex items-center gap-1 font-mono">
                                   <Calendar className="w-3.5 h-3.5 text-teal-700" />

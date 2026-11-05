@@ -618,45 +618,7 @@ export const INITIAL_PATIENTS: Patient[] = [
       tbili: 0.6,
       date: "2026-10-22"
     },
-    visits: [
-      {
-        id: "VISIT-002-1",
-        visitDate: "2026-06-15",
-        weight: 56.5,
-        regimen: "Shorter Bdq Regimen (Intensive)",
-        daysOfSupply: 14,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "correct",
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [
-          { drugName: "Bedaquiline 100 mg", quantity: "56 เม็ด", instructions: "4 เม็ด OD พร้อมอาหาร" },
-          { drugName: "Levofloxacin 500 mg", quantity: "28 เม็ด", instructions: "2 เม็ด OD" }
-        ],
-        nextAppointmentDate: "2026-06-29",
-        notes: "เริ่มสูตรสั้น MDR-TB ตรวจ EKG Baseline QTc 418 ms"
-      },
-      {
-        id: "VISIT-002-2",
-        visitDate: "2026-10-22",
-        weight: 58.9,
-        regimen: "Shorter Bdq Regimen (Continuation)",
-        daysOfSupply: 21,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "correct",
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [
-          { drugName: "Levofloxacin 500 mg", quantity: "42 เม็ด", instructions: "2 เม็ด OD" },
-          { drugName: "Clofazimine 100 mg", quantity: "21 แคปซูล", instructions: "1 แคปซูล OD" },
-          { drugName: "Pyrazinamide 500 mg", quantity: "63 เม็ด", instructions: "3 เม็ด OD" },
-          { drugName: "Ethambutol 400 mg", quantity: "63 เม็ด", instructions: "3 เม็ด OD" }
-        ],
-        nextAppointmentDate: "2026-11-12",
-        notes: "เดือนที่ 5 ผลเสมหะ AFB เป็นลบ EKG QTc 435 ms ปกติ",
-        sideEffectsNoted: "ผิวหนังคล้ำอมส้มเล็กน้อย"
-      }
-    ],
+    visits: [],
     adrRecords: [
       {
         id: "ADR-101",
@@ -726,56 +688,7 @@ export const INITIAL_PATIENTS: Patient[] = [
     hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["Enalapril 5 mg OD", "Allopurinol 100 mg OD (Hold)"],
     scr: 1.15,
-    visits: [
-      {
-        id: "VISIT-003-1",
-        visitDate: "2026-08-10",
-        weight: 51.5,
-        regimen: "4FDC 3 เม็ด/วัน",
-        daysOfSupply: 30,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "correct",
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "90 เม็ด" }],
-        nextAppointmentDate: "2026-09-10",
-        notes: "เริ่มยาเดือนแรก"
-      },
-      {
-        id: "VISIT-003-2",
-        visitDate: "2026-09-10",
-        weight: 52.0,
-        regimen: "4FDC 3 เม็ด/วัน",
-        daysOfSupply: 30,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "incorrect",
-        incorrectReason: "ลืมกินยาวันหยุดสัปดาห์ละ 1-2 ครั้งช่วงไปสวนยาง",
-        missedDosesCount: 4,
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "90 เม็ด" }],
-        nextAppointmentDate: "2026-10-10",
-        notes: "นัดตรวจเสมหะสิ้นสุดเดือนที่ 2 ผู้ป่วยยอมรับลืมทานยาบางมื้อ",
-        sideEffectsNoted: "ไม่มีอาการแพ้ แต่มีลืมทานยา"
-      },
-      {
-        id: "VISIT-003-3",
-        visitDate: "2026-10-10",
-        weight: 52.0,
-        regimen: "2HRZE / 6HR (ขยายเวลาเพิ่ม 2 เดือน)",
-        daysOfSupply: 21,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "incorrect",
-        incorrectReason: "ลืมทานยา 2 มื้อช่วงเสาร์-อาทิตย์",
-        missedDosesCount: 2,
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [{ drugName: "4FDC (HRZE)", quantity: "63 เม็ด" }, { drugName: "Pyridoxine 50 mg", quantity: "21 เม็ด" }],
-        nextAppointmentDate: "2026-11-01",
-        notes: "เสมหะเดือนที่ 2 ยังเป็นบวก ขยายเวลาการรักษาและจ่ายยา 21 วัน ประสาน DOTs รพ.สต.",
-        sideEffectsNoted: "มีไอแห้งๆ ลืมทานยา"
-      }
-    ],
+    visits: [],
     adrRecords: [],
     soapNotes: [
       {
@@ -839,27 +752,7 @@ export const INITIAL_PATIENTS: Patient[] = [
     hosxpUpdatedBy: "ภก.วิชัย ชื่นกมล (ภก.คลินิก)",
     concomitantMeds: ["TLD (Tenofovir/Lamivudine/Dolutegravir 50mg) OD", "Dolutegravir 50 mg (เพิ่ม dose เย็น)", "Cotrimoxazole 1 tab OD"],
     scr: 0.88,
-    visits: [
-      {
-        id: "VISIT-004-1",
-        visitDate: "2026-10-24",
-        weight: 62.4,
-        regimen: "4FDC 4 เม็ด + Double Dose DTG",
-        daysOfSupply: 14,
-        dispenseStatus: "Dispensed",
-        medicationTakingStatus: "correct",
-        dispensedBy: "ภก.วิชัย ชื่นกมล",
-        nurseRequisitionBy: "พว.สมใจ ใจดี",
-        dispensedItems: [
-          { drugName: "4FDC (HRZE)", quantity: "56 เม็ด", instructions: "4 เม็ด OD ก่อนอาหารเช้า" },
-          { drugName: "Dolutegravir 50 mg", quantity: "14 เม็ด", instructions: "1 เม็ด OD ตอนเย็น (เสริม dose ที่สองเนื่องจากทาน Rifampicin)" },
-          { drugName: "Pyridoxine 50 mg", quantity: "14 เม็ด", instructions: "1 เม็ด OD หลังอาหาร" }
-        ],
-        nextAppointmentDate: "2026-11-07",
-        notes: "เริ่มยา TB ร่วมกับยาต้านไวรัส HIV นัดติดตาม 2 สัปดาห์",
-        sideEffectsNoted: "ไม่มีอาการแพ้ยา"
-      }
-    ],
+    visits: [],
     adrRecords: [],
     soapNotes: [
       {
