@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { PatientRegistry } from './components/PatientRegistry';
 import { DosingCalculator } from './components/DosingCalculator';
@@ -19,9 +19,31 @@ import { INITIAL_PATIENTS } from './data/cpgData';
 import { Patient, PatientVisit, ADRRecord, SOAPNote } from './types/tb';
 import { ParsedRequisitionRow } from './utils/excelImport';
 
+const STORAGE_KEY = 'tb_pharmacy_patients_v1';
+
 export default function App() {
-  const [patients, setPatients] = useState<Patient[]>(INITIAL_PATIENTS);
-  const [selectedPatientId, setSelectedPatientId] = useState<string>(INITIAL_PATIENTS[0].id);
+  const [patients, setPatients] = useState<Patient[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return INITIAL_PATIENTS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(patients));
+    } catch {
+      // ignore storage errors
+    }
+  }, [patients]);
+
+  const [selectedPatientId, setSelectedPatientId] = useState<string>(() => patients[0]?.id || '');
   const [activeTab, setActiveTab] = useState<'registry' | 'calculator' | 'rechallenge' | 'guidelines' | 'dashboard'>('registry');
 
   // Modal Visibility States
@@ -378,13 +400,11 @@ export default function App() {
 
   // Handler: Delete / Discharge (D/C) Patient
   const handleDeletePatient = (patientId: string) => {
-    setPatients(prev => {
-      const remaining = prev.filter(p => p.id !== patientId);
-      if (selectedPatientId === patientId && remaining.length > 0) {
-        setSelectedPatientId(remaining[0].id);
-      }
-      return remaining;
-    });
+    const remaining = patients.filter(p => p.id !== patientId);
+    setPatients(remaining);
+    if (selectedPatientId === patientId) {
+      setSelectedPatientId(remaining.length > 0 ? remaining[0].id : '');
+    }
   };
 
   // Handler: Import Excel Weekly Requisitions
