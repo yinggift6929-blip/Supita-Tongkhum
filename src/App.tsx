@@ -410,27 +410,26 @@ export default function App() {
   };
 
   // Handler: Update Patient Regimen & Tablet Dosing
-  const handleUpdatePatientRegimen = (patientId: string, updatedRegimen: string, customDoses?: any) => {
-    setPatients(prev => prev.map(p => {
-      if (p.id === patientId) {
-        return {
-          ...p,
-          regimenName: updatedRegimen,
-          customDoses,
-          multidisciplinaryNotes: [
-            {
-              id: `MDT-${Date.now()}`,
-              date: new Date().toISOString().split('T')[0],
-              sender: 'ภก.คลินิก (เภสัชกร)',
-              role: 'Pharmacist',
-              text: `[ปรับสูตรยา & จำนวนเม็ด] ปรับขนาดยาประจำตัวผู้ป่วยเป็น: ${updatedRegimen}`
-            },
-            ...p.multidisciplinaryNotes
-          ]
-        };
-      }
-      return p;
-    }));
+  const handleUpdatePatientRegimen = async (patientId: string, updatedRegimen: string, customDoses?: any) => {
+    const target = patients.find(p => p.id === patientId);
+    if (!target) return;
+    const updatedPatient: Patient = {
+      ...target,
+      regimenName: updatedRegimen,
+      customDoses,
+      multidisciplinaryNotes: [
+        {
+          id: `MDT-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          sender: 'ภญ.สุภิตา ทองขำ (ภก.คลินิก)',
+          role: 'Pharmacist',
+          text: `[ปรับสูตรยา & จำนวนเม็ด] ปรับขนาดยาประจำตัวผู้ป่วยเป็น: ${updatedRegimen}`
+        },
+        ...(target.multidisciplinaryNotes || [])
+      ]
+    };
+    setPatients(prev => prev.map(p => (p.id === patientId ? updatedPatient : p)));
+    await savePatientToFirestore(updatedPatient);
   };
 
   // Handler: Update Patient Basic Info (Name, HN, Age, Gender, Weight, Phone)
