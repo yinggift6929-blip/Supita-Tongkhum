@@ -381,7 +381,7 @@ export const AddAdrModal: React.FC<AddAdrModalProps> = ({ onClose, onSubmit }) =
   const [reaction, setReaction] = useState('');
   const [severity, setSeverity] = useState<'Mild' | 'Moderate' | 'Severe' | 'Life-threatening'>('Moderate');
   const [action, setAction] = useState('');
-  const [reporter, setReporter] = useState('ภก.วิชัย ชื่นกมล (เภสัชกรคลินิก)');
+  const [reporter, setReporter] = useState('ภญ.สุภิตา ทองขำ (เภสัชกรคลินิก)');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,7 +511,7 @@ export const AddSoapModal: React.FC<AddSoapModalProps> = ({ onClose, onSubmit })
   const [objective, setObjective] = useState('');
   const [assessment, setAssessment] = useState('');
   const [plan, setPlan] = useState('');
-  const [author, setAuthor] = useState('ภก.วิชัย ชื่นกมล (ภก.คลินิก)');
+  const [author, setAuthor] = useState('ภญ.สุภิตา ทองขำ (ภก.คลินิก)');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

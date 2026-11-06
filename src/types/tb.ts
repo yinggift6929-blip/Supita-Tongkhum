@@ -60,10 +60,14 @@ export interface PatientVisit {
 }
 
 export interface PatientCustomDoses {
-  hTabs?: number; // Isoniazid (100mg) เม็ด
-  rTabs?: number; // Rifampicin แคปซูล
-  zTabs?: number; // Pyrazinamide (500mg) เม็ด
-  eTabs?: number; // Ethambutol (400mg) เม็ด
+  hTabs?: number; // Isoniazid 100 mg เม็ด
+  rTabs?: number; // Rifampicin แคปซูล (legacy)
+  r300Tabs?: number; // Rifampicin 300 mg แคปซูล
+  r450Tabs?: number; // Rifampicin 450 mg แคปซูล
+  zTabs?: number; // Pyrazinamide 500 mg เม็ด
+  eTabs?: number; // Ethambutol 400 mg เม็ด (legacy)
+  e400Tabs?: number; // Ethambutol 400 mg เม็ด
+  e500Tabs?: number; // Ethambutol 500 mg เม็ด
   vitBcoSig?: string; // e.g. "1*3 pc"
   fdcTabs?: number; // 4FDC เม็ด
   mode?: 'split' | 'fdc';

@@ -343,7 +343,7 @@ export default function App() {
           ...p,
           visits: (p.visits || []).map(v => 
             v.id === visitId 
-              ? { ...v, dispenseStatus: 'Dispensed' as const, dispensedBy: 'ภก.วิชัย ชื่นกมล (ภก.คลินิก)' } 
+              ? { ...v, dispenseStatus: 'Dispensed' as const, dispensedBy: 'ภญ.สุภิตา ทองขำ (ภก.คลินิก)' } 
               : v
           )
         };
@@ -392,7 +392,7 @@ export default function App() {
           ...p,
           hosxpNotes: notes,
           hosxpLastUpdated: timeStr,
-          hosxpUpdatedBy: 'ภก.วิชัย ชื่นกมล (ภก.คลินิก)',
+          hosxpUpdatedBy: 'ภญ.สุภิตา ทองขำ (ภก.คลินิก)',
           multidisciplinaryNotes: [
             {
               id: `MDT-${Date.now()}`,
@@ -488,8 +488,8 @@ export default function App() {
         regimen: row.regimen,
         daysOfSupply: row.daysOfSupply,
         dispenseStatus: 'Dispensed',
-        dispensedBy: 'ภก.วิชัย ชื่นกมล (นำเข้าจากไฟล์เบิกยา)',
-        nurseRequisitionBy: row.nurseRequisitionBy || 'พยาบาลคลินิก TB รพ.เขาชัยสน',
+        dispensedBy: 'ภญ.สุภิตา ทองขำ (นำเข้าจากไฟล์เบิกยา)',
+        nurseRequisitionBy: row.nurseRequisitionBy || 'พว.นงนุตร เพชรสง (พยาบาล TB)',
         dispensedItems: row.dispensedItemsText ? [{ drugName: row.dispensedItemsText, quantity: '' }] : [],
         nextAppointmentDate: row.nextAppointmentDate,
         notes: row.notes,

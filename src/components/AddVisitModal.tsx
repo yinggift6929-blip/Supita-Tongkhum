@@ -28,8 +28,8 @@ export const AddVisitModal: React.FC<AddVisitModalProps> = ({
   const [regimen, setRegimen] = useState<string>(patient.regimenName || '2(HRZE) / 4(HR)');
   const [daysOfSupply, setDaysOfSupply] = useState<number>(7);
   const [dispenseStatus, setDispenseStatus] = useState<'Pending' | 'Dispensed' | 'Verified'>('Dispensed');
-  const [dispensedBy, setDispensedBy] = useState<string>('ภก.วิชัย ชื่นกมล (ภก.คลินิก)');
-  const [nurseRequisitionBy, setNurseRequisitionBy] = useState<string>('พว.สมใจ ใจดี (พยาบาล TB)');
+  const [dispensedBy, setDispensedBy] = useState<string>('ภญ.สุภิตา ทองขำ (ภก.คลินิก)');
+  const [nurseRequisitionBy, setNurseRequisitionBy] = useState<string>('พว.นงนุตร เพชรสง (พยาบาล TB)');
   const [itemsText, setItemsText] = useState<string>(() => {
     const cd = patient.customDoses;
     if (cd && cd.mode === 'split') {

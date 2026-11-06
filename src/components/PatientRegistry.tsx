@@ -168,29 +168,49 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
   // Calculation of standard CPG default tablets based on weight
   const getCpgDefaultDoses = (weight: number) => {
     const isLowW = weight < 50;
-    const defaultH = 3; // 100mg x 3 = 300mg
-    const defaultR = isLowW ? 1 : 2; // 1 cap (450mg) or 2 caps (300mg x 2 = 600mg)
+    const defaultH = 3; // Isoniazid 100 mg x 3 = 300 mg
+    const defaultR300 = isLowW ? 0 : 2; // Rifampicin 300 mg x 2 = 600 mg
+    const defaultR450 = isLowW ? 1 : 0; // Rifampicin 450 mg x 1 = 450 mg
     const defaultZ = weight < 40 ? 1.5 : weight < 50 ? 2 : weight <= 70 ? 3 : 4;
-    const defaultE = weight < 40 ? 1.5 : weight < 50 ? 2 : weight <= 70 ? 2.5 : 4;
+    const defaultE400 = weight < 40 ? 1.5 : weight < 50 ? 2 : weight <= 70 ? 2.5 : 4;
+    const defaultE500 = 0;
     const defaultFdc = weight < 38 ? 2 : weight <= 54 ? 3 : weight <= 70 ? 4 : 5;
 
     return {
       hTabs: defaultH,
-      rTabs: defaultR,
+      rTabs: isLowW ? 1 : 2,
+      r300Tabs: defaultR300,
+      r450Tabs: defaultR450,
       zTabs: defaultZ,
-      eTabs: defaultE,
+      eTabs: defaultE400,
+      e400Tabs: defaultE400,
+      e500Tabs: defaultE500,
       vitBcoSig: '1*3 pc',
       fdcTabs: defaultFdc,
-      mode: isLowW ? 'split' : ('split' as const)
+      mode: 'split' as const
     };
   };
 
   const initialDoses = getCpgDefaultDoses(selectedPatient?.weight ?? 50);
   const [dosingMode, setDosingMode] = useState<'split' | 'fdc'>('split');
   const [hTabs, setHTabs] = useState<number>(selectedPatient?.customDoses?.hTabs ?? initialDoses.hTabs);
-  const [rTabs, setRTabs] = useState<number>(selectedPatient?.customDoses?.rTabs ?? initialDoses.rTabs);
+  const [r300Tabs, setR300Tabs] = useState<number>(
+    selectedPatient?.customDoses?.r300Tabs ??
+      (selectedPatient?.customDoses?.rTabs !== undefined
+        ? (selectedPatient.weight < 50 ? 0 : selectedPatient.customDoses.rTabs)
+        : initialDoses.r300Tabs)
+  );
+  const [r450Tabs, setR450Tabs] = useState<number>(
+    selectedPatient?.customDoses?.r450Tabs ??
+      (selectedPatient?.customDoses?.rTabs !== undefined
+        ? (selectedPatient.weight < 50 ? selectedPatient.customDoses.rTabs : 0)
+        : initialDoses.r450Tabs)
+  );
   const [zTabs, setZTabs] = useState<number>(selectedPatient?.customDoses?.zTabs ?? initialDoses.zTabs);
-  const [eTabs, setETabs] = useState<number>(selectedPatient?.customDoses?.eTabs ?? initialDoses.eTabs);
+  const [e400Tabs, setE400Tabs] = useState<number>(
+    selectedPatient?.customDoses?.e400Tabs ?? selectedPatient?.customDoses?.eTabs ?? initialDoses.e400Tabs
+  );
+  const [e500Tabs, setE500Tabs] = useState<number>(selectedPatient?.customDoses?.e500Tabs ?? initialDoses.e500Tabs);
   const [vitBcoSig, setVitBcoSig] = useState<string>(selectedPatient?.customDoses?.vitBcoSig || '1*3 pc');
   const [fdcTabs, setFdcTabs] = useState<number>(selectedPatient?.customDoses?.fdcTabs ?? initialDoses.fdcTabs);
   const [savedRegimenNotice, setSavedRegimenNotice] = useState<boolean>(false);
@@ -202,33 +222,39 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
     const custom = selectedPatient.customDoses;
     setDosingMode('split');
     setHTabs(custom?.hTabs ?? d.hTabs);
-    setRTabs(custom?.rTabs ?? d.rTabs);
+    setR300Tabs(
+      custom?.r300Tabs ??
+        (custom?.rTabs !== undefined ? (selectedPatient.weight < 50 ? 0 : custom.rTabs) : d.r300Tabs)
+    );
+    setR450Tabs(
+      custom?.r450Tabs ??
+        (custom?.rTabs !== undefined ? (selectedPatient.weight < 50 ? custom.rTabs : 0) : d.r450Tabs)
+    );
     setZTabs(custom?.zTabs ?? d.zTabs);
-    setETabs(custom?.eTabs ?? d.eTabs);
+    setE400Tabs(custom?.e400Tabs ?? custom?.eTabs ?? d.e400Tabs);
+    setE500Tabs(custom?.e500Tabs ?? d.e500Tabs);
     setVitBcoSig(custom?.vitBcoSig || '1*3 pc');
     setFdcTabs(custom?.fdcTabs ?? d.fdcTabs);
     setSavedRegimenNotice(false);
   }, [selectedPatient?.id, selectedPatient?.weight, selectedPatient?.customDoses]);
 
   const generateRegimenSummary = (
-    mode: 'split' | 'fdc',
+    _mode: 'split' | 'fdc',
     h: number,
-    r: number,
+    r300: number,
+    r450: number,
     z: number,
-    e: number,
-    bco: string,
-    fdc: number
+    e400: number,
+    e500: number,
+    bco: string
   ) => {
-    if (mode === 'fdc') {
-      const bcoText = bco !== '0' ? ` + Vit B co ${bco}` : '';
-      return `4FDC (Rimstar) ${fdc} เม็ด OD ac${bcoText}`;
-    }
-    const rMg = (selectedPatient?.weight ?? 50) < 50 ? `${r * 450}mg` : `${r * 300}mg`;
     const parts: string[] = [];
-    if (h > 0) parts.push(`H(${h * 100}mg) ${h} เม็ด`);
-    if (r > 0) parts.push(`R(${rMg}) ${r} แคปซูล`);
-    if (z > 0) parts.push(`Z(${z * 500}mg) ${z} เม็ด`);
-    if (e > 0) parts.push(`E(${e * 400}mg) ${e} เม็ด`);
+    if (h > 0) parts.push(`Isoniazid 100 mg จำนวน ${h} เม็ด`);
+    if (r300 > 0) parts.push(`Rifampicin 300 mg จำนวน ${r300} แคปซูล`);
+    if (r450 > 0) parts.push(`Rifampicin 450 mg จำนวน ${r450} แคปซูล`);
+    if (z > 0) parts.push(`Pyrazinamide 500 mg จำนวน ${z} เม็ด`);
+    if (e400 > 0) parts.push(`Ethambutol 400 mg จำนวน ${e400} เม็ด`);
+    if (e500 > 0) parts.push(`Ethambutol 500 mg จำนวน ${e500} เม็ด`);
     if (bco !== '0') parts.push(`Vit B co ${bco}`);
     return parts.length > 0 ? parts.join(', ') : 'งดยาทุกตัวชั่วคราว';
   };
@@ -236,20 +262,26 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
   const handleSaveRegimen = (
     newMode = dosingMode,
     newH = hTabs,
-    newR = rTabs,
+    newR300 = r300Tabs,
+    newR450 = r450Tabs,
     newZ = zTabs,
-    newE = eTabs,
+    newE400 = e400Tabs,
+    newE500 = e500Tabs,
     newBco = vitBcoSig,
     newFdc = fdcTabs
   ) => {
-    const summary = generateRegimenSummary(newMode, newH, newR, newZ, newE, newBco, newFdc);
+    const summary = generateRegimenSummary(newMode, newH, newR300, newR450, newZ, newE400, newE500, newBco);
     if (onUpdatePatientRegimen) {
       onUpdatePatientRegimen(selectedPatient.id, summary, {
         mode: newMode,
         hTabs: newH,
-        rTabs: newR,
+        rTabs: newR450 > 0 ? newR450 : newR300,
+        r300Tabs: newR300,
+        r450Tabs: newR450,
         zTabs: newZ,
-        eTabs: newE,
+        eTabs: newE400 > 0 ? newE400 : newE500,
+        e400Tabs: newE400,
+        e500Tabs: newE500,
         vitBcoSig: newBco,
         fdcTabs: newFdc
       });
@@ -260,15 +292,17 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
 
   const handleResetToCpg = () => {
     const d = getCpgDefaultDoses(selectedPatient.weight);
-    setDosingMode(selectedPatient.weight < 50 ? 'split' : 'split');
+    setDosingMode('split');
     setHTabs(d.hTabs);
-    setRTabs(d.rTabs);
+    setR300Tabs(d.r300Tabs);
+    setR450Tabs(d.r450Tabs);
     setZTabs(d.zTabs);
-    setETabs(d.eTabs);
+    setE400Tabs(d.e400Tabs);
+    setE500Tabs(d.e500Tabs);
     setVitBcoSig(d.vitBcoSig);
     setFdcTabs(d.fdcTabs);
 
-    const summary = generateRegimenSummary('split', d.hTabs, d.rTabs, d.zTabs, d.eTabs, d.vitBcoSig, d.fdcTabs);
+    const summary = generateRegimenSummary('split', d.hTabs, d.r300Tabs, d.r450Tabs, d.zTabs, d.e400Tabs, d.e500Tabs, d.vitBcoSig);
     if (onUpdatePatientRegimen) {
       onUpdatePatientRegimen(selectedPatient.id, summary, d);
     }
@@ -637,18 +671,26 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                   </form>
                 )}
 
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 mt-1.5 font-medium">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 mt-2 font-medium">
                   <span>
                     <strong className="text-slate-800">อายุ:</strong> {selectedPatient.age} ปี ({selectedPatient.gender})
                   </span>
-                  <span>•</span>
-                  <span>
-                    <strong className="text-slate-800">น้ำหนักปัจจุบัน:</strong>{' '}
-                    <span className={isLowWeight ? 'text-amber-700 font-bold' : 'text-slate-900 font-bold'}>
+                  <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border shadow-2xs ${
+                    isLowWeight
+                      ? 'bg-amber-50 border-amber-300 text-amber-950'
+                      : 'bg-teal-50 border-teal-200 text-teal-950'
+                  }`}>
+                    <Scale className={`w-4 h-4 ${isLowWeight ? 'text-amber-700' : 'text-teal-700'}`} />
+                    <span className="text-xs font-bold">น้ำหนัก (BW):</span>
+                    <span className={`text-xl sm:text-2xl font-black tracking-tight font-mono ${
+                      isLowWeight ? 'text-amber-800' : 'text-teal-900'
+                    }`}>
                       {selectedPatient.weight} kg
-                    </span>{' '}
-                    (BMI: {selectedPatient.bmi})
-                  </span>
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-semibold">
+                      (BMI: {selectedPatient.bmi})
+                    </span>
+                  </div>
                   <span>•</span>
                   <span>
                     <strong className="text-slate-800">DOTs:</strong> {selectedPatient.dotType}
@@ -829,7 +871,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                   <div className="flex items-center gap-2">
                     <span>อัปเดตล่าสุด: <strong className="font-mono text-blue-950">{selectedPatient.hosxpLastUpdated || '2026-11-04 09:30'}</strong></span>
                     <span>•</span>
-                    <span>ผู้บันทึก: <strong className="text-blue-950">{selectedPatient.hosxpUpdatedBy || 'ภก.วิชัย ชื่นกมล (ภก.คลินิก)'}</strong></span>
+                    <span>ผู้บันทึก: <strong className="text-blue-950">{selectedPatient.hosxpUpdatedBy || 'ภญ.สุภิตา ทองขำ (ภก.คลินิก)'}</strong></span>
                   </div>
                   <span className="text-slate-500 italic">
                     * สามารถกด "คัดลอกไป HosXP" เพื่อนำข้อความไป Paste ในช่อง Doctor/Pharmacist Note ได้ทันที
@@ -894,14 +936,14 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
           </div>
 
           {/* 📊 SCALE แสดงการกินยาของผู้ป่วย (TREATMENT PROGRESS SCALE ROADMAP) */}
-          <div className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-5 rounded-2xl shadow-xl border border-slate-800 space-y-4">
-            <div className="flex flex-wrap justify-between items-center border-b border-slate-800 pb-3 gap-2">
+          <div className="bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white p-3.5 rounded-2xl shadow-md border border-slate-800 space-y-2">
+            <div className="flex flex-wrap justify-between items-center border-b border-slate-800 pb-2 gap-2">
               <div>
-                <span className="text-[11px] font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="text-[10px] font-black text-teal-400 uppercase tracking-widest flex items-center gap-1.5">
                   <Scale className="w-3.5 h-3.5 text-amber-400" />
                   SCALE แสดงการกินยาของผู้ป่วย (TREATMENT PROGRESS SCALE)
                 </span>
-                <h3 className="text-base font-extrabold text-white mt-1 flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-white mt-0.5 flex items-center gap-2">
                   <span>ระยะปัจจุบัน : <span className="text-amber-300">{timelineStats.stageTitle}</span></span>
                   <span className="text-xs font-medium text-slate-300">
                     (กินยามาแล้ว {timelineStats.currentM} จากเป้าหมาย {timelineStats.regMonths} เดือน)
@@ -909,18 +951,18 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 </h3>
               </div>
               <div className="text-right">
-                <span className="text-[11px] text-slate-400 block font-medium">ความก้าวหน้าการกินยา</span>
-                <span className="text-2xl font-black text-amber-400 font-mono tracking-tight">
+                <span className="text-[10px] text-slate-400 block font-medium">ความก้าวหน้าการกินยา</span>
+                <span className="text-xl font-black text-amber-400 font-mono tracking-tight">
                   {timelineStats.percent}%
                 </span>
               </div>
             </div>
 
             {/* The Visual Scale Bar */}
-            <div className="pt-6 pb-2 px-2">
+            <div className="pt-5 pb-1 px-2">
               <div className="relative">
                 {/* Background tracks */}
-                <div className="h-5 bg-slate-800 rounded-full w-full overflow-hidden flex border border-slate-700/80">
+                <div className="h-3 bg-slate-800 rounded-full w-full overflow-hidden flex border border-slate-700/80">
                   <div 
                     className="bg-blue-600/70 h-full relative" 
                     style={{ width: `${Math.min((2 / timelineStats.regMonths) * 100, 100)}%` }} 
@@ -942,7 +984,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
 
                 {/* Actual Progress Fill */}
                 <div 
-                  className="absolute top-0 left-0 h-5 bg-gradient-to-r from-teal-400 via-emerald-400 to-amber-300 rounded-full shadow-lg opacity-90 transition-all duration-700" 
+                  className="absolute top-0 left-0 h-3 bg-gradient-to-r from-teal-400 via-emerald-400 to-amber-300 rounded-full shadow-lg opacity-90 transition-all duration-700" 
                   style={{ width: `${timelineStats.percent}%` }} 
                 />
 
@@ -1044,9 +1086,144 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
             </div>
 
             {/* INTERACTIVE TABLET CONFIGURATION */}
+              {/* 📊 VISUAL MEDICATION REGIMEN DIAGRAM */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-teal-50/90 via-white to-emerald-50/70 text-slate-900 border-2 border-teal-200 shadow-sm space-y-4">
+                <div className="flex flex-wrap justify-between items-center gap-2 border-b border-teal-200/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-teal-600" />
+                    <span className="text-sm font-black tracking-wide text-teal-950 uppercase">
+                      แผนภาพสรุปสูตรยาที่รับประทาน (Visual Regimen Diagram)
+                    </span>
+                  </div>
+                  <span className="text-sm font-black bg-teal-100 text-teal-950 border border-teal-300 px-3 py-1 rounded-xl font-mono">
+                    นน. {selectedPatient.weight} kg
+                  </span>
+                </div>
+
+                {/* Bedtime (ก่อนนอน) Group */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-teal-800">
+                    <Clock className="w-4 h-4 text-teal-700" />
+                    <span>รับประทานวันละ 1 ครั้ง ก่อนนอน (hs)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      {
+                        show: hTabs > 0,
+                        code: 'H',
+                        name: 'Isoniazid 100 mg',
+                        count: hTabs,
+                        unit: 'เม็ด',
+                        mg: hTabs * 100,
+                        color: 'bg-white border-teal-200 text-teal-950 shadow-xs',
+                        badge: 'bg-teal-700 text-white'
+                      },
+                      {
+                        show: r300Tabs > 0,
+                        code: 'R',
+                        name: 'Rifampicin 300 mg',
+                        count: r300Tabs,
+                        unit: 'แคปซูล',
+                        mg: r300Tabs * 300,
+                        color: 'bg-white border-rose-200 text-rose-950 shadow-xs',
+                        badge: 'bg-rose-600 text-white'
+                      },
+                      {
+                        show: r450Tabs > 0,
+                        code: 'R',
+                        name: 'Rifampicin 450 mg',
+                        count: r450Tabs,
+                        unit: 'แคปซูล',
+                        mg: r450Tabs * 450,
+                        color: 'bg-white border-rose-200 text-rose-950 shadow-xs',
+                        badge: 'bg-rose-600 text-white'
+                      },
+                      {
+                        show: zTabs > 0,
+                        code: 'Z',
+                        name: 'Pyrazinamide 500 mg',
+                        count: zTabs,
+                        unit: 'เม็ด',
+                        mg: zTabs * 500,
+                        color: 'bg-white border-amber-200 text-amber-950 shadow-xs',
+                        badge: 'bg-amber-600 text-white'
+                      },
+                      {
+                        show: e400Tabs > 0,
+                        code: 'E',
+                        name: 'Ethambutol 400 mg',
+                        count: e400Tabs,
+                        unit: 'เม็ด',
+                        mg: e400Tabs * 400,
+                        color: 'bg-white border-blue-200 text-blue-950 shadow-xs',
+                        badge: 'bg-blue-600 text-white'
+                      },
+                      {
+                        show: e500Tabs > 0,
+                        code: 'E',
+                        name: 'Ethambutol 500 mg',
+                        count: e500Tabs,
+                        unit: 'เม็ด',
+                        mg: e500Tabs * 500,
+                        color: 'bg-white border-blue-200 text-blue-950 shadow-xs',
+                        badge: 'bg-blue-600 text-white'
+                      }
+                    ]
+                      .filter(d => d.show)
+                      .map((drug, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${drug.color}`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={`w-9 h-9 rounded-xl font-black text-sm flex items-center justify-center shrink-0 ${drug.badge}`}>
+                              {drug.code}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-sm font-black text-slate-900 truncate">{drug.name}</div>
+                              <div className="text-xs text-slate-500 font-mono">{drug.mg} mg/day</div>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <div className="text-xl sm:text-2xl font-black text-slate-900 leading-none">
+                              {drug.count} <span className="text-xs font-bold text-slate-700">{drug.unit}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-500 font-semibold mt-1">ก่อนนอน</div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                {/* After Meals (หลังอาหาร) Group */}
+                {vitBcoSig !== '0' && (
+                  <div className="pt-3 border-t border-teal-200/80 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-8 h-8 rounded-xl bg-emerald-700 text-white font-black text-sm flex items-center justify-center">
+                        B
+                      </span>
+                      <span className="text-sm font-black text-emerald-950">
+                        Vitamin B Complex (Vit B co)
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm font-black text-emerald-950 bg-white border border-emerald-200 px-3.5 py-1.5 rounded-xl shadow-xs">
+                      <span>{vitBcoSig} หลังอาหาร</span>
+                      <span className="text-xs font-bold text-emerald-700">
+                        ({vitBcoSig === '1*3 pc' ? 'เช้า 1 • กลางวัน 1 • เย็น 1' : vitBcoSig === '1*2 pc' ? 'เช้า 1 • เย็น 1' : 'วันละ 1 เม็ด'})
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-3">
                 {/* 1. ISONIAZID (H) */}
-                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  hTabs > 0
+                    ? 'border-teal-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
@@ -1055,13 +1232,32 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         H
                       </span>
                       <div>
-                        <span className="font-bold text-slate-900 text-xs">Isoniazid (INH 100 mg / เม็ด)</span>
+                        <span className={`font-bold text-xs ${hTabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Isoniazid (INH 100 mg / เม็ด)
+                        </span>
                         <span className={`text-[11px] font-bold ml-2 ${hTabs > 0 ? 'text-teal-900' : 'text-slate-500'}`}>
                           {hTabs === 0 ? 'งดยา (ไม่ได้ใช้)' : `ทานวันละ ${hTabs} เม็ด (${hTabs * 100} mg) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">เกณฑ์ CPG: 4-6 mg/kg/day</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: 4-6 mg/kg/day</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = hTabs > 0 ? 0 : getCpgDefaultDoses(selectedPatient.weight).hTabs;
+                          setHTabs(nextVal);
+                          handleSaveRegimen('split', nextVal, r300Tabs, r450Tabs, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          hTabs > 0
+                            ? 'bg-teal-50 text-teal-800 border-teal-300 hover:bg-teal-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {hTabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1072,7 +1268,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         type="button"
                         onClick={() => {
                           setHTabs(val);
-                          handleSaveRegimen('split', val, rTabs, zTabs, eTabs, vitBcoSig, fdcTabs);
+                          handleSaveRegimen('split', val, r300Tabs, r450Tabs, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           hTabs === val
@@ -1088,27 +1284,48 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                   </div>
                 </div>
 
-                {/* 2. RIFAMPICIN (R) */}
-                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
+                {/* 2A. RIFAMPICIN 300 MG */}
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  r300Tabs > 0
+                    ? 'border-red-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
-                        rTabs > 0 ? 'bg-red-700 text-white' : 'bg-slate-400 text-white'
+                        r300Tabs > 0 ? 'bg-red-700 text-white' : 'bg-slate-400 text-white'
                       }`}>
                         R
                       </span>
                       <div>
-                        <span className="font-bold text-slate-900 text-xs">
-                          Rifampicin ({selectedPatient.weight < 50 ? 'แคปซูล 450 mg' : 'แคปซูล 300 mg'})
+                        <span className={`font-bold text-xs ${r300Tabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Rifampicin 300 mg (แคปซูล 300 mg)
                         </span>
-                        <span className={`text-[11px] font-bold ml-2 ${rTabs > 0 ? 'text-red-900' : 'text-slate-500'}`}>
-                          {rTabs === 0
+                        <span className={`text-[11px] font-bold ml-2 ${r300Tabs > 0 ? 'text-red-900' : 'text-slate-500'}`}>
+                          {r300Tabs === 0
                             ? 'งดยา (ไม่ได้ใช้)'
-                            : `ทานวันละ ${rTabs} แคปซูล (${selectedPatient.weight < 50 ? `${rTabs * 450} mg` : `${rTabs * 300} mg`}) ก่อนนอน`}
+                            : `ทานวันละ ${r300Tabs} แคปซูล (${r300Tabs * 300} mg) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">เกณฑ์ CPG: 10 mg/kg/day (สูงสุด 600mg)</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: 10 mg/kg/day (สูงสุด 600mg)</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = r300Tabs > 0 ? 0 : 2;
+                          setR300Tabs(nextVal);
+                          handleSaveRegimen('split', hTabs, nextVal, r450Tabs, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          r300Tabs > 0
+                            ? 'bg-red-50 text-red-800 border-red-300 hover:bg-red-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {r300Tabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1118,11 +1335,79 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         key={val}
                         type="button"
                         onClick={() => {
-                          setRTabs(val);
-                          handleSaveRegimen('split', hTabs, val, zTabs, eTabs, vitBcoSig, fdcTabs);
+                          setR300Tabs(val);
+                          handleSaveRegimen('split', hTabs, val, r450Tabs, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                          rTabs === val
+                          r300Tabs === val
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-red-700 text-white border-red-700 shadow-sm ring-2 ring-red-400/40'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        {val === 0 ? '0 (งด)' : `${val} แคปซูล`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2B. RIFAMPICIN 450 MG */}
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  r450Tabs > 0
+                    ? 'border-red-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
+                  <div className="flex flex-wrap justify-between items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        r450Tabs > 0 ? 'bg-red-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
+                        R
+                      </span>
+                      <div>
+                        <span className={`font-bold text-xs ${r450Tabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Rifampicin 450 mg (แคปซูล 450 mg)
+                        </span>
+                        <span className={`text-[11px] font-bold ml-2 ${r450Tabs > 0 ? 'text-red-900' : 'text-slate-500'}`}>
+                          {r450Tabs === 0
+                            ? 'งดยา (ไม่ได้ใช้)'
+                            : `ทานวันละ ${r450Tabs} แคปซูล (${r450Tabs * 450} mg) ก่อนนอน`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: BW &lt; 50 kg (450 mg/day)</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = r450Tabs > 0 ? 0 : 1;
+                          setR450Tabs(nextVal);
+                          handleSaveRegimen('split', hTabs, r300Tabs, nextVal, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          r450Tabs > 0
+                            ? 'bg-red-50 text-red-800 border-red-300 hover:bg-red-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {r450Tabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-bold text-slate-600 mr-1">เลือกจำนวนแคปซูล:</span>
+                    {[0, 1, 1.5, 2].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => {
+                          setR450Tabs(val);
+                          handleSaveRegimen('split', hTabs, r300Tabs, val, zTabs, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          r450Tabs === val
                             ? val === 0
                               ? 'bg-slate-200 text-slate-800 border-slate-400'
                               : 'bg-red-700 text-white border-red-700 shadow-sm ring-2 ring-red-400/40'
@@ -1136,7 +1421,11 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 </div>
 
                 {/* 3. PYRAZINAMIDE (Z) */}
-                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  zTabs > 0
+                    ? 'border-amber-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
@@ -1145,13 +1434,32 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         Z
                       </span>
                       <div>
-                        <span className="font-bold text-slate-900 text-xs">Pyrazinamide (PZA 500 mg / เม็ด)</span>
+                        <span className={`font-bold text-xs ${zTabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Pyrazinamide (PZA 500 mg / เม็ด)
+                        </span>
                         <span className={`text-[11px] font-bold ml-2 ${zTabs > 0 ? 'text-amber-900' : 'text-slate-500'}`}>
                           {zTabs === 0 ? 'งดยา (Off Z / เข้า Continuation Phase)' : `ทานวันละ ${zTabs} เม็ด (${zTabs * 500} mg) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">เกณฑ์ CPG: 20-30 mg/kg/day</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: 20-30 mg/kg/day</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = zTabs > 0 ? 0 : getCpgDefaultDoses(selectedPatient.weight).zTabs;
+                          setZTabs(nextVal);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, nextVal, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          zTabs > 0
+                            ? 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {zTabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1162,7 +1470,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         type="button"
                         onClick={() => {
                           setZTabs(val);
-                          handleSaveRegimen('split', hTabs, rTabs, val, eTabs, vitBcoSig, fdcTabs);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, val, e400Tabs, e500Tabs, vitBcoSig, fdcTabs);
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           zTabs === val
@@ -1178,23 +1486,46 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                   </div>
                 </div>
 
-                {/* 4. ETHAMBUTOL (E) */}
-                <div className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-white transition-all space-y-2">
+                {/* 4A. ETHAMBUTOL 400 MG */}
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  e400Tabs > 0
+                    ? 'border-blue-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
-                        eTabs > 0 ? 'bg-blue-700 text-white' : 'bg-slate-400 text-white'
+                        e400Tabs > 0 ? 'bg-blue-700 text-white' : 'bg-slate-400 text-white'
                       }`}>
                         E
                       </span>
                       <div>
-                        <span className="font-bold text-slate-900 text-xs">Ethambutol (EMB 400 mg / เม็ด)</span>
-                        <span className={`text-[11px] font-bold ml-2 ${eTabs > 0 ? 'text-blue-900' : 'text-slate-500'}`}>
-                          {eTabs === 0 ? 'งดยา (Off E / เข้า Continuation Phase)' : `ทานวันละ ${eTabs} เม็ด (${eTabs * 400} mg) ก่อนนอน`}
+                        <span className={`font-bold text-xs ${e400Tabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Ethambutol 400 mg (EMB 400 mg / เม็ด)
+                        </span>
+                        <span className={`text-[11px] font-bold ml-2 ${e400Tabs > 0 ? 'text-blue-900' : 'text-slate-500'}`}>
+                          {e400Tabs === 0 ? 'งดยา (ไม่ได้ใช้)' : `ทานวันละ ${e400Tabs} เม็ด (${e400Tabs * 400} mg) ก่อนนอน`}
                         </span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-500 font-medium">เกณฑ์ CPG: 15-20 mg/kg/day</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: 15-20 mg/kg/day</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = e400Tabs > 0 ? 0 : getCpgDefaultDoses(selectedPatient.weight).e400Tabs;
+                          setE400Tabs(nextVal);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, nextVal, e500Tabs, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          e400Tabs > 0
+                            ? 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {e400Tabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -1204,11 +1535,77 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         key={val}
                         type="button"
                         onClick={() => {
-                          setETabs(val);
-                          handleSaveRegimen('split', hTabs, rTabs, zTabs, val, vitBcoSig, fdcTabs);
+                          setE400Tabs(val);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, val, e500Tabs, vitBcoSig, fdcTabs);
                         }}
                         className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                          eTabs === val
+                          e400Tabs === val
+                            ? val === 0
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-blue-700 text-white border-blue-700 shadow-sm ring-2 ring-blue-400/40'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300'
+                        }`}
+                      >
+                        {val === 0 ? '0 (งด)' : `${val} เม็ด`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4B. ETHAMBUTOL 500 MG */}
+                <div className={`p-3 rounded-xl border transition-all space-y-2 ${
+                  e500Tabs > 0
+                    ? 'border-blue-200 bg-white shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
+                  <div className="flex flex-wrap justify-between items-center gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        e500Tabs > 0 ? 'bg-blue-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
+                        E
+                      </span>
+                      <div>
+                        <span className={`font-bold text-xs ${e500Tabs > 0 ? 'text-slate-900' : 'line-through text-slate-500'}`}>
+                          Ethambutol 500 mg (EMB 500 mg / เม็ด)
+                        </span>
+                        <span className={`text-[11px] font-bold ml-2 ${e500Tabs > 0 ? 'text-blue-900' : 'text-slate-500'}`}>
+                          {e500Tabs === 0 ? 'งดยา (ไม่ได้ใช้)' : `ทานวันละ ${e500Tabs} เม็ด (${e500Tabs * 500} mg) ก่อนนอน`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">เกณฑ์ CPG: 15-20 mg/kg/day</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const nextVal = e500Tabs > 0 ? 0 : 2;
+                          setE500Tabs(nextVal);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, e400Tabs, nextVal, vitBcoSig, fdcTabs);
+                        }}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                          e500Tabs > 0
+                            ? 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
+                            : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                        }`}
+                      >
+                        {e500Tabs > 0 ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-bold text-slate-600 mr-1">เลือกจำนวนเม็ด:</span>
+                    {[0, 1, 1.5, 2, 2.5, 3].map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => {
+                          setE500Tabs(val);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, e400Tabs, val, vitBcoSig, fdcTabs);
+                        }}
+                        className={`min-w-[42px] py-1 px-2.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          e500Tabs === val
                             ? val === 0
                               ? 'bg-slate-200 text-slate-800 border-slate-400'
                               : 'bg-blue-700 text-white border-blue-700 shadow-sm ring-2 ring-blue-400/40'
@@ -1222,28 +1619,55 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                 </div>
 
                 {/* 5. VIT B CO (VITAMIN B COMPLEX - ทดแทน VIT B6 ตามที่ผู้ใช้ระบุ) */}
-                <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/70 space-y-2">
+                <div className={`p-3.5 rounded-xl border transition-all space-y-2 ${
+                  vitBcoSig !== '0'
+                    ? 'border-emerald-300 bg-emerald-50/70 shadow-2xs'
+                    : 'border-dashed border-slate-300 bg-slate-100/70 opacity-75'
+                }`}>
                   <div className="flex flex-wrap justify-between items-center gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-emerald-700 text-white font-black text-xs flex items-center justify-center">
+                      <span className={`w-6 h-6 rounded-lg font-black text-xs flex items-center justify-center ${
+                        vitBcoSig !== '0' ? 'bg-emerald-700 text-white' : 'bg-slate-400 text-white'
+                      }`}>
                         B
                       </span>
                       <div>
-                        <span className="font-extrabold text-emerald-950 text-xs">
+                        <span className={`font-extrabold text-xs ${vitBcoSig !== '0' ? 'text-emerald-950' : 'line-through text-slate-500'}`}>
                           Vitamin B Complex (Vit B co)
                         </span>
-                        <span className="bg-emerald-200 text-emerald-950 text-[10px] font-black px-2 py-0.5 rounded ml-2">
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded ml-2 ${
+                          vitBcoSig !== '0' ? 'bg-emerald-200 text-emerald-950' : 'bg-slate-200 text-slate-600'
+                        }`}>
                           ทดแทน Vit B6 (รพ.เขาชัยสน)
                         </span>
-                        <span className="text-[11px] text-emerald-900 font-bold ml-2">
-                          วิธีรับประทาน: {vitBcoSig} หลังอาหาร (รวม {vitBcoSig === '1*3 pc' ? '3 เม็ด/วัน' : vitBcoSig === '1*2 pc' ? '2 เม็ด/วัน' : vitBcoSig === '1*1 pc' ? '1 เม็ด/วัน' : '0 เม็ด'})
+                        <span className={`text-[11px] font-bold ml-2 ${vitBcoSig !== '0' ? 'text-emerald-900' : 'text-slate-500'}`}>
+                          {vitBcoSig === '0'
+                            ? 'งดรับประทาน'
+                            : `วิธีรับประทาน: ${vitBcoSig} หลังอาหาร (รวม ${vitBcoSig === '1*3 pc' ? '3 เม็ด/วัน' : vitBcoSig === '1*2 pc' ? '2 เม็ด/วัน' : '1 เม็ด/วัน'})`}
                         </span>
                       </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextSig = vitBcoSig !== '0' ? '0' : '1*3 pc';
+                        setVitBcoSig(nextSig);
+                        handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, e400Tabs, e500Tabs, nextSig, fdcTabs);
+                      }}
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-all cursor-pointer ${
+                        vitBcoSig !== '0'
+                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+                          : 'bg-slate-200 text-slate-600 border-slate-300 hover:bg-slate-300'
+                      }`}
+                    >
+                      {vitBcoSig !== '0' ? '✓ ใช้งานอยู่' : '✕ งดใช้ยา'}
+                    </button>
                   </div>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold text-emerald-900 mr-1">เลือกขนาดและวิธีรับประทาน:</span>
+                    <span className={`text-[11px] font-bold mr-1 ${vitBcoSig !== '0' ? 'text-emerald-900' : 'text-slate-600'}`}>
+                      เลือกขนาดและวิธีรับประทาน:
+                    </span>
                     {[
                       { sig: '1*3 pc', label: '1*3 pc (3 เม็ด/วัน - มาตรฐาน)', desc: 'เช้า กลางวัน เย็น มื้อละ 1 เม็ด' },
                       { sig: '1*2 pc', label: '1*2 pc (2 เม็ด/วัน)', desc: 'เช้า-เย็น มื้อละ 1 เม็ด' },
@@ -1255,11 +1679,13 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
                         type="button"
                         onClick={() => {
                           setVitBcoSig(item.sig);
-                          handleSaveRegimen('split', hTabs, rTabs, zTabs, eTabs, item.sig, fdcTabs);
+                          handleSaveRegimen('split', hTabs, r300Tabs, r450Tabs, zTabs, e400Tabs, e500Tabs, item.sig, fdcTabs);
                         }}
                         className={`py-1.5 px-3 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                           vitBcoSig === item.sig
-                            ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-400/40'
+                            ? item.sig === '0'
+                              ? 'bg-slate-200 text-slate-800 border-slate-400'
+                              : 'bg-emerald-700 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-400/40'
                             : 'bg-white hover:bg-emerald-100/60 text-emerald-950 border-emerald-300'
                         }`}
                       >
@@ -1275,7 +1701,7 @@ export const PatientRegistry: React.FC<PatientRegistryProps> = ({
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-extrabold text-slate-800">สูตรยาที่จัดปัจจุบัน:</span>
                 <span className="font-mono font-bold text-teal-950 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200 shadow-xs">
-                  {generateRegimenSummary(dosingMode, hTabs, rTabs, zTabs, eTabs, vitBcoSig, fdcTabs)}
+                  {generateRegimenSummary(dosingMode, hTabs, r300Tabs, r450Tabs, zTabs, e400Tabs, e500Tabs, vitBcoSig)}
                 </span>
                 {savedRegimenNotice && (
                   <span className="text-emerald-700 font-bold flex items-center gap-1 animate-pulse">
